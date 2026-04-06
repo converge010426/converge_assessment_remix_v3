@@ -1,0 +1,5 @@
+{
+  "name": "converge-assessment-remix-v3",
+  "description": "Assessment platform with Supabase integration",
+  "requestFramePermissions": []
+}

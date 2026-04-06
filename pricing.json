@@ -1,0 +1,20 @@
+{
+  "converge1": {
+    "name": "Converge 1: MBTI Basic",
+    "description": "Myers-Briggs type assessment based on Carl Jung 16 types theory.",
+    "price": 20.00,
+    "currency": "ZAR"
+  },
+  "converge2": {
+    "name": "Converge 2: Comprehensive",
+    "description": "Multi-dimensional report integrating MBTI, Big Five, and Emotional Intelligence.",
+    "price": 50.00,
+    "currency": "ZAR"
+  },
+  "converge3": {
+    "name": "Converge 3: Recruiter All-in",
+    "description": "MBTI, Comprehensive + Job-Specific Candidate Suitability Analysis for hiring.",
+    "price": 500.00,
+    "currency": "ZAR"
+  }
+}
