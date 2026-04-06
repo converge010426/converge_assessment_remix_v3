@@ -178,30 +178,46 @@ app.post("/api/submit", async (req, res) => {
     const submissionId = finalData[0].id;
     logToFile(`[API] INSERT SUCCESS: ID ${submissionId}`);
 
-    res.json({ status: "ok", id: submissionId });
-
-    // Background report generation
+    // Report generation and notification (Awaited to ensure completion on serverless)
     try {
+      logToFile(`[API] Starting report generation for ID ${submissionId}...`);
       let reportPath;
       if (product === 'comprehensive' || product === 'recruiter') {
         reportPath = await generateComprehensiveReport(name, results, product === 'recruiter');
       } else {
         reportPath = await generateMBTIReport(name, results);
       }
+      logToFile(`[API] Report generated at: ${reportPath}`);
+      
       const reportUrl = `/api/reports/${path.basename(reportPath)}`;
-      await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
+      const { error: updateError } = await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
+      
+      if (updateError) {
+        logToFile(`[API] ERROR updating report_url: ${updateError.message}`);
+      } else {
+        logToFile(`[API] report_url updated successfully: ${reportUrl}`);
+      }
 
-      // Send internal notification
+      // Send internal notification to admin
+      const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
+      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "tomknsn@gmail.com";
+      
+      logToFile(`[API] Sending admin notification FROM: ${fromEmail} TO: ${adminEmail}...`);
+      
       await sendEmail(
-        process.env.ADMIN_EMAIL || "tomknsn@gmail.com",
-        `New Assessment: ${name}`,
-        `A new assessment has been submitted by ${name} (${email}).\nProduct: ${product}\nID: ${submissionId}\n\nReport: ${process.env.VERCEL_URL || 'http://localhost:3000'}${reportUrl}`,
+        adminEmail,
+        `NEW ASSESSMENT: ${name}`,
+        `A new assessment has been submitted.\n\n--- CANDIDATE DETAILS ---\nName: ${name}\nEmail: ${email}\nProduct: ${product}\nID: ${submissionId}\n\n--- STATUS ---\nThe report has been generated and is stored on the server.\nIt will NOT be sent to the candidate automatically.\n\n--- ACTION REQUIRED ---\nPlease verify payment and then send the report manually via the Admin Dashboard:\n${process.env.VERCEL_URL || 'http://localhost:3000'}/admin/result/${submissionId}\n\nInternal Report Link: ${process.env.VERCEL_URL || 'http://localhost:3000'}${reportUrl}`,
         [{ filename: path.basename(reportPath), path: reportPath }]
       );
+      
+      logToFile(`[API] Process completed for ID ${submissionId}`);
     } catch (reportErr: any) {
-      logToFile(`[API] Background report/email failed: ${reportErr.message}`);
+      logToFile(`[API] Report/notification failed for ID ${submissionId}: ${reportErr.message}`);
+      console.error(reportErr);
     }
 
+    res.json({ status: "ok", id: submissionId });
   } catch (error: any) {
     logToFile(`[API] CRITICAL ERROR: ${error.message}`);
     if (!res.headersSent) {
@@ -223,8 +239,9 @@ app.post("/api/admin/send-report", async (req, res) => {
     const fileName = path.basename(reportUrl);
     const reportPath = path.join(reportsDir, fileName);
 
+    logToFile(`[API] Checking for report file at ${reportPath}...`);
     if (!fs.existsSync(reportPath)) {
-      logToFile(`[API] Report file not found at ${reportPath}`);
+      logToFile(`[API] ERROR: Report file not found at ${reportPath}`);
       return res.status(404).json({ error: "Report file not found" });
     }
 
