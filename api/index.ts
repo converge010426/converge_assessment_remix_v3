@@ -1,5 +1,5 @@
-// VERSION: 6.0 (FINAL POLISH)
-// SYNC_ID: SYNC_20260406_0935
+// VERSION: 6.7 (SMTP DIAGNOSTICS)
+// SYNC_ID: SYNC_20260406_1405
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -99,6 +99,7 @@ app.get("/api/admin/diagnostics", (req, res) => {
   );
 
   const diagnostics = {
+    VERSION: "6.7",
     VERCEL: !!process.env.VERCEL,
     VERCEL_URL: process.env.VERCEL_URL || 'NOT SET',
     SUPABASE_URL: !!process.env.SUPABASE_URL,
@@ -112,7 +113,8 @@ app.get("/api/admin/diagnostics", (req, res) => {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET (defaults to tomknsn@gmail.com)',
     NODE_ENV: process.env.NODE_ENV || 'NOT SET',
     DETECTED_KEYS: envKeys,
-    HINT: "If SMTP variables show as 'false' or 'NOT SET' but are configured in Vercel, you MUST trigger a new Deployment (Redeploy) for them to take effect."
+    DOTENV_FILE_EXISTS: fs.existsSync(path.join(process.cwd(), '.env')),
+    HINT: "If SMTP variables show as 'false' or 'NOT SET' but are configured in Vercel, they might be in 'Team' settings but not linked to this 'Project'. Check Project Settings -> Environment Variables specifically."
   };
   res.json(diagnostics);
 });
