@@ -76,6 +76,36 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Test email endpoint
+app.get("/api/admin/test-email", async (req, res) => {
+  const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
+  const result = await sendEmail(
+    adminEmail,
+    "TEST EMAIL: Converge System",
+    "This is a test email to verify your SMTP configuration is working correctly on Vercel."
+  );
+  res.json(result);
+});
+
+// Diagnostic endpoint for environment variables
+app.get("/api/admin/diagnostics", (req, res) => {
+  const diagnostics = {
+    VERCEL: !!process.env.VERCEL,
+    VERCEL_URL: process.env.VERCEL_URL || 'NOT SET',
+    SUPABASE_URL: !!process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SMTP_HOST: !!process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
+    SMTP_USER: !!process.env.SMTP_USER,
+    SMTP_PASS: !!process.env.SMTP_PASS,
+    SMTP_FROM: process.env.SMTP_FROM || 'NOT SET',
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET (defaults to tomknsn@gmail.com)',
+    NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+  };
+  res.json(diagnostics);
+});
+
 // API routes
 app.get("/api/health", (req, res) => {
   logToFile("Health check called");

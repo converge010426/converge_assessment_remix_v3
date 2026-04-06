@@ -797,6 +797,26 @@ function AdminDashboard() {
           )}
           <div className="flex gap-4 mt-4">
             <button 
+              onClick={async () => {
+                const res = await fetch('/api/admin/diagnostics');
+                const data = await res.json();
+                alert(JSON.stringify(data, null, 2));
+              }} 
+              className="mt-2 text-gold hover:underline font-bold uppercase tracking-widest"
+            >
+              Show Diagnostics
+            </button>
+            <button 
+              onClick={async () => {
+                const res = await fetch('/api/admin/test-email');
+                const data = await res.json();
+                alert(JSON.stringify(data, null, 2));
+              }} 
+              className="mt-2 text-gold hover:underline font-bold uppercase tracking-widest"
+            >
+              Send Test Email
+            </button>
+            <button 
               onClick={() => window.location.reload()} 
               className="mt-2 text-gold hover:underline font-bold uppercase tracking-widest"
             >
@@ -870,9 +890,27 @@ function AdminDashboard() {
                     {sub.product === 'recruiter' ? 'Converge 3' : sub.product === 'comprehensive' ? 'Converge 2' : 'Converge 1'}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    {(sub.reportPath || sub.report_url) && <FileText className="w-3 h-3 text-gold" />}
+                    {(sub.reportPath || sub.report_url) && (
+                      <a 
+                        href={sub.reportPath || sub.report_url} 
+                        download 
+                        onClick={(e) => e.stopPropagation()}
+                        className="hover:scale-110 transition-transform"
+                        title="Download Report"
+                      >
+                        <FileText className="w-3 h-3 text-gold" />
+                      </a>
+                    )}
                     <div className="text-grey text-[9px] font-bold tracking-tighter uppercase">
-                      {new Date(sub.submitted_at || sub.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {(() => {
+                        const date = sub.submitted_at || sub.submittedAt;
+                        if (!date) return 'Unknown Date';
+                        try {
+                          return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                        } catch (e) {
+                          return 'Invalid Date';
+                        }
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1007,7 +1045,7 @@ function AdminResultDetail() {
               {results?.mbti || 'Unknown Type'} 
               {typeInfo && ` • ${typeInfo.title} • ${typeInfo.subtitle}`}
             </p>
-            <p className="font-sans text-grey text-[10px] tracking-[2px] uppercase mt-4">Assessment Date: {new Date(submittedAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
+            <p className="font-sans text-grey text-[10px] tracking-[2px] uppercase mt-4">Assessment Date: {submittedAt ? new Date(submittedAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'Unknown'}</p>
           </div>
           <div className="bg-warm p-6 border-l-2 border-gold">
             <div className="flex items-center gap-4 mb-2">
@@ -1015,7 +1053,7 @@ function AdminResultDetail() {
                 {submission.product === 'recruiter' ? 'Converge 3' : submission.product === 'comprehensive' ? 'Converge 2' : 'Converge 1'}
               </div>
             </div>
-            <div className="text-navy font-sans text-5xl font-bold">{results.mbti}</div>
+            <div className="text-navy font-sans text-5xl font-bold">{results?.mbti || 'N/A'}</div>
             <div className="text-gold font-sans italic text-[10px] mt-1">Cross-validated</div>
           </div>
         </div>
@@ -1069,7 +1107,7 @@ function AdminResultDetail() {
                     <div>
                       <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Key Strengths</h5>
                       <ul className="space-y-2">
-                        {typeInfo.strengths.map((s: string, i: number) => (
+                        {typeInfo.strengths?.map((s: string, i: number) => (
                           <li key={i} className="flex gap-2 text-sm text-dark font-medium">
                             <span className="text-gold">•</span> {s}
                           </li>
@@ -1085,7 +1123,7 @@ function AdminResultDetail() {
                     <div>
                       <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Potential Challenges</h5>
                       <ul className="space-y-2">
-                        {typeInfo.challenges.map((c: string, i: number) => (
+                        {typeInfo.challenges?.map((c: string, i: number) => (
                           <li key={i} className="flex gap-2 text-sm text-dark font-medium">
                             <span className="text-gold">•</span> {c}
                           </li>
