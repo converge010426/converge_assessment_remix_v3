@@ -1,5 +1,5 @@
-// VERSION: 5.3 (ROUTING FIX)
-// SYNC_ID: 1712412544000
+// VERSION: 5.4 (FINAL ROUTING FIX)
+// SYNC_ID: SYNC_20260406_0705
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -34,10 +34,23 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // API routes
 app.get("/api/health", (req, res) => {
   logToFile("Health check called");
+  const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKeyPreview = hasServiceKey ? `${process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 5)}...` : 'NOT SET';
+  
   res.json({ 
     status: "ok", 
+    version: "5.4 (FINAL ROUTING FIX)",
+    syncId: "SYNC_20260406_0705",
     environment: process.env.VERCEL ? "vercel" : "local",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    env: {
+      hasUrl: !!process.env.SUPABASE_URL,
+      hasAnonKey: !!process.env.SUPABASE_ANON_KEY,
+      hasServiceKey,
+      serviceKeyPreview,
+      nodeEnv: process.env.NODE_ENV,
+      vercel: !!process.env.VERCEL
+    }
   });
 });
 
