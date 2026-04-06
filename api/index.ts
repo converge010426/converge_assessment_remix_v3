@@ -1,5 +1,5 @@
-// VERSION: 5.6 (DIAGNOSTIC ENHANCEMENT)
-// SYNC_ID: SYNC_20260406_0758
+// VERSION: 5.7 (DEEP DIAGNOSTICS)
+// SYNC_ID: SYNC_20260406_0840
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -39,8 +39,8 @@ app.get("/api/health", (req, res) => {
   
   res.json({ 
     status: "ok", 
-    version: "5.6 (DIAGNOSTIC ENHANCEMENT)",
-    syncId: "SYNC_20260406_0758",
+    version: "5.7 (DEEP DIAGNOSTICS)",
+    syncId: "SYNC_20260406_0840",
     environment: process.env.VERCEL ? "vercel" : "local",
     timestamp: new Date().toISOString(),
     env: {
@@ -185,12 +185,13 @@ app.get("/api/results", async (req, res) => {
     
     logToFile(`Supabase Response: Status ${status}, Count: ${data?.length || 0}, Exact Count: ${count}`);
     
-    res.setHeader('X-Supabase-Status', String(status));
-    res.setHeader('X-Supabase-Count', String(data?.length || 0));
-    res.setHeader('X-Supabase-Exact-Count', String(count || 0));
-    res.setHeader('X-Supabase-Url-Preview', process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL.substring(0, 25)}...` : 'NONE');
-    res.setHeader('X-Using-Service-Role', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'true' : 'false');
-    res.setHeader('X-Connection-Ok', String(connectionOk));
+    res.setHeader('x-supabase-status', String(status));
+    res.setHeader('x-supabase-count', String(data?.length || 0));
+    res.setHeader('x-supabase-exact-count', String(count || 0));
+    const urlVal = process.env.SUPABASE_URL || 'NONE';
+    res.setHeader('x-supabase-url-preview', urlVal.length > 10 ? `${urlVal.substring(0, 30)}...` : urlVal);
+    res.setHeader('x-using-service-role', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'true' : 'false');
+    res.setHeader('x-connection-ok', String(connectionOk));
     if (connectionError) {
       res.setHeader('X-Connection-Error', connectionError.replace(/\n/g, ' '));
     }

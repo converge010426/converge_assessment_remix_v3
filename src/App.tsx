@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v5.6)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v5.7)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -677,13 +677,13 @@ function AdminDashboard() {
         console.log('[Dashboard] Response status:', res.status);
         // Capture diagnostic headers
         setDiagInfo({
-          status: res.headers.get('X-Supabase-Status') || 'N/A',
-          count: res.headers.get('X-Supabase-Count') || 'N/A',
-          exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A',
-          serviceRole: res.headers.get('X-Using-Service-Role') || 'false',
-          connectionOk: res.headers.get('X-Connection-Ok') || 'false',
-          connectionError: res.headers.get('X-Connection-Error') || '',
-          urlPreview: res.headers.get('X-Supabase-Url-Preview') || 'N/A'
+          status: res.headers.get('x-supabase-status') || 'N/A',
+          count: res.headers.get('x-supabase-count') || 'N/A',
+          exact: res.headers.get('x-supabase-exact-count') || 'N/A',
+          serviceRole: res.headers.get('x-using-service-role') || 'false',
+          connectionOk: res.headers.get('x-connection-ok') || 'false',
+          connectionError: res.headers.get('x-connection-error') || '',
+          urlPreview: res.headers.get('x-supabase-url-preview') || 'N/A'
         });
         
         if (!res.ok) {
@@ -744,8 +744,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 5.6 (DIAGNOSTIC ENHANCEMENT)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0758</p>
+          <p className="font-bold text-gold mb-2">VERSION: 5.7 (DEEP DIAGNOSTICS)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0840</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
