@@ -204,12 +204,18 @@ app.post("/api/submit", async (req, res) => {
       
       logToFile(`[API] Sending admin notification FROM: ${fromEmail} TO: ${adminEmail}...`);
       
-      await sendEmail(
+      const emailResult = await sendEmail(
         adminEmail,
         `NEW ASSESSMENT: ${name}`,
-        `A new assessment has been submitted.\n\n--- CANDIDATE DETAILS ---\nName: ${name}\nEmail: ${email}\nProduct: ${product}\nID: ${submissionId}\n\n--- STATUS ---\nThe report has been generated and is stored on the server.\nIt will NOT be sent to the candidate automatically.\n\n--- ACTION REQUIRED ---\nPlease verify payment and then send the report manually via the Admin Dashboard:\n${process.env.VERCEL_URL || 'http://localhost:3000'}/admin/result/${submissionId}\n\nInternal Report Link: ${process.env.VERCEL_URL || 'http://localhost:3000'}${reportUrl}`,
+        `A new assessment has been submitted.\n\n--- CANDIDATE DETAILS ---\nName: ${name}\nEmail: ${email}\nProduct: ${product}\nID: ${submissionId}\n\n--- STATUS ---\nThe report has been generated and is stored on the server.\nIt will NOT be sent to the candidate automatically.\n\n--- ACTION REQUIRED ---\nPlease verify payment and then send the report manually via the Admin Dashboard:\n${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/admin/result/${submissionId}\n\nInternal Report Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}${reportUrl}`,
         [{ filename: path.basename(reportPath), path: reportPath }]
       );
+      
+      if (emailResult.success) {
+        logToFile(`[API] Admin notification sent successfully: ${emailResult.messageId}`);
+      } else {
+        logToFile(`[API] ERROR: Admin notification failed: ${emailResult.error}`);
+      }
       
       logToFile(`[API] Process completed for ID ${submissionId}`);
     } catch (reportErr: any) {

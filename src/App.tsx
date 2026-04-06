@@ -919,6 +919,13 @@ function AdminResultDetail() {
       })
       .then(data => {
         const found = data.find((s: any) => s.id.toString() === id);
+        if (found && found.results && typeof found.results === 'string') {
+          try {
+            found.results = JSON.parse(found.results);
+          } catch (e) {
+            console.error('Failed to parse results JSON:', e);
+          }
+        }
         setSubmission(found);
       })
       .catch(err => {
@@ -1037,17 +1044,21 @@ function AdminResultDetail() {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
-                {[
-                  { char: results.mbti[0], label: results.mbti[0] === 'E' ? 'Extraverted' : 'Introverted' },
-                  { char: results.mbti[1], label: results.mbti[1] === 'S' ? 'Sensing' : 'Intuitive' },
-                  { char: results.mbti[2], label: results.mbti[2] === 'T' ? 'Thinking' : 'Feeling' },
-                  { char: results.mbti[3], label: results.mbti[3] === 'J' ? 'Judging' : 'Perceiving' },
-                ].map((dim, i) => (
-                  <div key={i} className="bg-warm p-3 border border-gold/5 text-center min-w-[100px]">
-                    <div className="text-navy text-2xl font-bold italic">{dim.char}</div>
-                    <div className="text-gold text-[7px] font-bold tracking-[1px] uppercase">{dim.label}</div>
-                  </div>
-                ))}
+                {results?.mbti && results.mbti.length >= 4 ? (
+                  [
+                    { char: results.mbti[0], label: results.mbti[0] === 'E' ? 'Extraverted' : 'Introverted' },
+                    { char: results.mbti[1], label: results.mbti[1] === 'S' ? 'Sensing' : 'Intuitive' },
+                    { char: results.mbti[2], label: results.mbti[2] === 'T' ? 'Thinking' : 'Feeling' },
+                    { char: results.mbti[3], label: results.mbti[3] === 'J' ? 'Judging' : 'Perceiving' },
+                  ].map((dim, i) => (
+                    <div key={i} className="bg-warm p-3 border border-gold/5 text-center min-w-[100px]">
+                      <div className="text-navy text-2xl font-bold italic">{dim.char}</div>
+                      <div className="text-gold text-[7px] font-bold tracking-[1px] uppercase">{dim.label}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-grey text-[10px] italic">Dimensions not available</div>
+                )}
               </div>
             </div>
 
@@ -1099,56 +1110,64 @@ function AdminResultDetail() {
         <section className="mb-16 break-inside-avoid">
           <h2 className="section-label">Section 2 • Big Five Clinical Data</h2>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-navy text-white font-sans text-[9px] tracking-[3px] uppercase">
-                  <th className="p-4 text-left">Trait</th>
-                  <th className="p-4 text-left">Score</th>
-                  <th className="p-4 text-left">Interpretation</th>
-                </tr>
-              </thead>
-              <tbody className="font-sans text-sm">
-                {[
-                  { trait: 'Openness', score: results.bigFive.openness, desc: 'Intellectual curiosity and systems thinking' },
-                  { trait: 'Conscientiousness', score: results.bigFive.conscientiousness, desc: 'Drive, self-discipline, and execution focus' },
-                  { trait: 'Extraversion', score: results.bigFive.extraversion, desc: 'Social energy and outward orientation' },
-                  { trait: 'Agreeableness', score: results.bigFive.agreeableness, desc: 'Focus on harmony vs independent principle' },
-                  { trait: 'Emotional Stability', score: results.bigFive.emotionalStability, desc: 'Internal sensitivity and stress resilience' },
-                ].map((row, i) => (
-                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-warm'}>
-                    <td className="p-4 font-bold text-navy antialiased">{row.trait}</td>
-                    <td className="p-4 text-gold font-bold antialiased">{row.score}th Percentile</td>
-                    <td className="p-4 text-dark font-semibold antialiased">{row.desc}</td>
+            {results?.bigFive ? (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-navy text-white font-sans text-[9px] tracking-[3px] uppercase">
+                    <th className="p-4 text-left">Trait</th>
+                    <th className="p-4 text-left">Score</th>
+                    <th className="p-4 text-left">Interpretation</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="font-sans text-sm">
+                  {[
+                    { trait: 'Openness', score: results.bigFive.openness, desc: 'Intellectual curiosity and systems thinking' },
+                    { trait: 'Conscientiousness', score: results.bigFive.conscientiousness, desc: 'Drive, self-discipline, and execution focus' },
+                    { trait: 'Extraversion', score: results.bigFive.extraversion, desc: 'Social energy and outward orientation' },
+                    { trait: 'Agreeableness', score: results.bigFive.agreeableness, desc: 'Focus on harmony vs independent principle' },
+                    { trait: 'Emotional Stability', score: results.bigFive.emotionalStability, desc: 'Internal sensitivity and stress resilience' },
+                  ].map((row, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-warm'}>
+                      <td className="p-4 font-bold text-navy antialiased">{row.trait}</td>
+                      <td className="p-4 text-gold font-bold antialiased">{row.score}th Percentile</td>
+                      <td className="p-4 text-dark font-semibold antialiased">{row.desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-center py-10 text-grey italic">Big Five data not available for this profile.</p>
+            )}
           </div>
         </section>
 
         <section className="mb-16 break-inside-avoid">
           <h2 className="section-label">Section 3 • Emotional Intelligence</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { icon: <ShieldCheck />, label: 'Self-Awareness', score: results.ei.selfAwareness },
-              { icon: <Zap />, label: 'Self-Regulation', score: results.ei.selfRegulation },
-              { icon: <Brain />, label: 'Motivation', score: results.ei.motivation },
-              { icon: <Info />, label: 'Empathy', score: results.ei.empathy },
-              { icon: <FileText />, label: 'Social Skills', score: results.ei.socialSkills },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-4 bg-warm p-6 border-l-4 border-navy">
-                <div className="text-gold">{item.icon}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-end mb-2">
-                    <span className="font-sans text-[10px] font-bold tracking-wider uppercase text-grey">{item.label}</span>
-                    <span className="font-sans text-xs font-bold text-navy">{item.score}%</span>
-                  </div>
-                  <div className="h-1 w-full bg-navy/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-navy" style={{ width: `${item.score}%` }} />
+            {results?.ei ? (
+              [
+                { icon: <ShieldCheck />, label: 'Self-Awareness', score: results.ei.selfAwareness },
+                { icon: <Zap />, label: 'Self-Regulation', score: results.ei.selfRegulation },
+                { icon: <Brain />, label: 'Motivation', score: results.ei.motivation },
+                { icon: <Info />, label: 'Empathy', score: results.ei.empathy },
+                { icon: <FileText />, label: 'Social Skills', score: results.ei.socialSkills },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4 bg-warm p-6 border-l-4 border-navy">
+                  <div className="text-gold">{item.icon}</div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="font-sans text-[10px] font-bold tracking-wider uppercase text-grey">{item.label}</span>
+                      <span className="font-sans text-xs font-bold text-navy">{item.score}%</span>
+                    </div>
+                    <div className="h-1 w-full bg-navy/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-navy" style={{ width: `${item.score}%` }} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="col-span-2 text-center py-10 text-grey italic">Emotional Intelligence data not available.</p>
+            )}
           </div>
         </section>
 
