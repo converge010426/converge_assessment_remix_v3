@@ -237,12 +237,41 @@ app.post("/api/admin/send-report", async (req, res) => {
   try {
     const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
     const fileName = path.basename(reportUrl);
-    const reportPath = path.join(reportsDir, fileName);
+    let reportPath = path.join(reportsDir, fileName);
 
     logToFile(`[API] Checking for report file at ${reportPath}...`);
     if (!fs.existsSync(reportPath)) {
-      logToFile(`[API] ERROR: Report file not found at ${reportPath}`);
-      return res.status(404).json({ error: "Report file not found" });
+      logToFile(`[API] Report file NOT found at ${reportPath}. Attempting to regenerate...`);
+      
+      // Fetch submission data to regenerate
+      const supabase = getSupabase(true);
+      const { data: sub, error: subError } = await supabase.from('submissions').select('*').eq('id', id).single();
+      
+      if (subError || !sub) {
+        logToFile(`[API] ERROR: Could not find submission ${id} to regenerate report: ${subError?.message}`);
+        return res.status(404).json({ error: "Submission not found for regeneration" });
+      }
+
+      // Regenerate
+      try {
+        const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
+        const product = sub.product;
+        const name = sub.name;
+
+        if (product === 'comprehensive' || product === 'recruiter') {
+          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter');
+        } else {
+          reportPath = await generateMBTIReport(name, results);
+        }
+        logToFile(`[API] Report successfully regenerated at: ${reportPath}`);
+        
+        // Update report_url in case filename changed (though it shouldn't if we use the same logic)
+        const newReportUrl = `/api/reports/${path.basename(reportPath)}`;
+        await supabase.from('submissions').update({ report_url: newReportUrl }).eq('id', id);
+      } catch (regenErr: any) {
+        logToFile(`[API] ERROR regenerating report: ${regenErr.message}`);
+        return res.status(500).json({ error: "Failed to regenerate missing report" });
+      }
     }
 
     const emailResult = await sendEmail(

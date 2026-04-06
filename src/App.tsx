@@ -933,7 +933,7 @@ function AdminResultDetail() {
   const { results, name, email } = submission;
   const submittedAt = submission.submitted_at || submission.submittedAt;
   const reportPath = submission.report_url || submission.reportPath;
-  const typeInfo = typeDescriptions[results.mbti];
+  const typeInfo = results?.mbti ? typeDescriptions[results.mbti] : null;
   const [isSending, setIsSending] = React.useState(false);
 
   const handleSendReport = async () => {
@@ -996,7 +996,10 @@ function AdminResultDetail() {
           <div className="max-w-xl">
             <h2 className="font-sans font-bold text-4xl text-navy mb-1">{name}</h2>
             <p className="font-sans text-grey text-sm font-semibold mb-2">{submission.email}</p>
-            <p className="font-sans text-gold italic text-lg">{results.mbti} • {typeInfo.title} • {typeInfo.subtitle}</p>
+            <p className="font-sans text-gold italic text-lg">
+              {results?.mbti || 'Unknown Type'} 
+              {typeInfo && ` • ${typeInfo.title} • ${typeInfo.subtitle}`}
+            </p>
             <p className="font-sans text-grey text-[10px] tracking-[2px] uppercase mt-4">Assessment Date: {new Date(submittedAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
           </div>
           <div className="bg-warm p-6 border-l-2 border-gold">
@@ -1023,9 +1026,15 @@ function AdminResultDetail() {
           <div className="bg-white p-8 border border-gold/10">
             <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
               <div className="flex-1">
-                <h3 className="text-5xl text-navy font-bold mb-4 antialiased italic">{results.mbti}</h3>
-                <h4 className="text-gold font-sans font-bold tracking-[3px] uppercase text-sm mb-4">{typeInfo.title} • {typeInfo.subtitle}</h4>
-                <p className="text-dark font-medium leading-relaxed antialiased">{typeInfo.description}</p>
+                <h3 className="text-5xl text-navy font-bold mb-4 antialiased italic">{results?.mbti || 'Unknown'}</h3>
+                {typeInfo ? (
+                  <>
+                    <h4 className="text-gold font-sans font-bold tracking-[3px] uppercase text-sm mb-4">{typeInfo.title} • {typeInfo.subtitle}</h4>
+                    <p className="text-dark font-medium leading-relaxed antialiased">{typeInfo.description}</p>
+                  </>
+                ) : (
+                  <p className="text-grey italic">Detailed personality type information is not available for this profile.</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
                 {[
@@ -1043,38 +1052,46 @@ function AdminResultDetail() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 border-t border-gold/10 pt-8">
-              <div className="space-y-6">
-                <div>
-                  <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Key Strengths</h5>
-                  <ul className="space-y-2">
-                    {typeInfo.strengths.map((s: string, i: number) => (
-                      <li key={i} className="flex gap-2 text-sm text-dark font-medium">
-                        <span className="text-gold">•</span> {s}
-                      </li>
-                    ))}
-                  </ul>
+              {typeInfo ? (
+                <>
+                  <div className="space-y-6">
+                    <div>
+                      <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Key Strengths</h5>
+                      <ul className="space-y-2">
+                        {typeInfo.strengths.map((s: string, i: number) => (
+                          <li key={i} className="flex gap-2 text-sm text-dark font-medium">
+                            <span className="text-gold">•</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Professional Environment</h5>
+                      <p className="text-sm text-dark font-medium leading-relaxed italic">{typeInfo.workplace}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div>
+                      <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Potential Challenges</h5>
+                      <ul className="space-y-2">
+                        {typeInfo.challenges.map((c: string, i: number) => (
+                          <li key={i} className="flex gap-2 text-sm text-dark font-medium">
+                            <span className="text-gold">•</span> {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Development Pathway</h5>
+                      <p className="text-sm text-dark font-medium leading-relaxed italic">{typeInfo.growth}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2 text-center py-8 text-grey italic">
+                  Additional behavioral insights are only available for standard MBTI types.
                 </div>
-                <div>
-                  <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Professional Environment</h5>
-                  <p className="text-sm text-dark font-medium leading-relaxed italic">{typeInfo.workplace}</p>
-                </div>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Potential Challenges</h5>
-                  <ul className="space-y-2">
-                    {typeInfo.challenges.map((c: string, i: number) => (
-                      <li key={i} className="flex gap-2 text-sm text-dark font-medium">
-                        <span className="text-gold">•</span> {c}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="text-navy font-sans font-bold text-[10px] tracking-[3px] uppercase mb-4 border-b border-gold/20 pb-2">Development Pathway</h5>
-                  <p className="text-sm text-dark font-medium leading-relaxed italic">{typeInfo.growth}</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
