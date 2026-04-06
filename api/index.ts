@@ -1,10 +1,11 @@
-// VERSION: 5.9 (FINAL SYNC)
-// SYNC_ID: SYNC_20260406_0912
+// VERSION: 6.0 (FINAL POLISH)
+// SYNC_ID: SYNC_20260406_0935
 import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import nodemailer from "nodemailer";
 import { generateMBTIReport, generateComprehensiveReport } from "../src/services/reportService.js";
 import { getSupabase } from "../src/lib/supabase.js";
 
@@ -25,6 +26,50 @@ function logToFile(message: string) {
   }
 }
 
+async function sendEmail(to: string, subject: string, text: string, attachments: any[] = []) {
+  logToFile(`[API] Attempting to send email to ${to}...`);
+  
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    logToFile("[API] ERROR: SMTP not configured. Missing SMTP_HOST, SMTP_USER, or SMTP_PASS in environment variables.");
+    return { success: false, error: "SMTP not configured" };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_PORT === "465",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    // Add timeout for better error handling
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+  });
+
+  try {
+    // Verify connection first
+    await transporter.verify();
+    logToFile("[API] SMTP Connection verified successfully.");
+
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+      attachments,
+    });
+    logToFile(`[API] Email sent successfully to ${to}. Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err: any) {
+    logToFile(`[API] ERROR: Email failed to ${to}: ${err.message}`);
+    if (err.code === 'EAUTH') {
+      logToFile("[API] HINT: This is an authentication error. Check your SMTP_USER and SMTP_PASS (App Password).");
+    }
+    return { success: false, error: err.message };
+  }
+}
+
 logToFile("API Server Initializing...");
 
 const app = express();
@@ -39,8 +84,8 @@ app.get("/api/health", (req, res) => {
   
   res.json({ 
     status: "ok", 
-    version: "5.7 (DEEP DIAGNOSTICS)",
-    syncId: "SYNC_20260406_0840",
+    version: "6.0 (FINAL POLISH)",
+    syncId: "SYNC_20260406_0935",
     environment: process.env.VERCEL ? "vercel" : "local",
     timestamp: new Date().toISOString(),
     env: {
@@ -145,8 +190,16 @@ app.post("/api/submit", async (req, res) => {
       }
       const reportUrl = `/api/reports/${path.basename(reportPath)}`;
       await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
+
+      // Send internal notification
+      await sendEmail(
+        process.env.ADMIN_EMAIL || "tomknsn@gmail.com",
+        `New Assessment: ${name}`,
+        `A new assessment has been submitted by ${name} (${email}).\nProduct: ${product}\nID: ${submissionId}\n\nReport: ${process.env.VERCEL_URL || 'http://localhost:3000'}${reportUrl}`,
+        [{ filename: path.basename(reportPath), path: reportPath }]
+      );
     } catch (reportErr: any) {
-      logToFile(`[API] Background report failed: ${reportErr.message}`);
+      logToFile(`[API] Background report/email failed: ${reportErr.message}`);
     }
 
   } catch (error: any) {
@@ -154,6 +207,42 @@ app.post("/api/submit", async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ error: "Internal server error", message: error.message });
     }
+  }
+});
+
+app.post("/api/admin/send-report", async (req, res) => {
+  const { id, email, name, reportUrl } = req.body;
+  logToFile(`[API] Admin requesting to send report for ID ${id} to ${email}`);
+
+  if (!id || !email || !reportUrl) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
+    const fileName = path.basename(reportUrl);
+    const reportPath = path.join(reportsDir, fileName);
+
+    if (!fs.existsSync(reportPath)) {
+      logToFile(`[API] Report file not found at ${reportPath}`);
+      return res.status(404).json({ error: "Report file not found" });
+    }
+
+    const emailResult = await sendEmail(
+      email,
+      `Your Converge Assessment Report: ${name}`,
+      `Dear ${name},\n\nPlease find your assessment report attached.\n\nBest regards,\nConverge Team`,
+      [{ filename: `Converge_Report_${name.replace(/\s+/g, '_')}.pdf`, path: reportPath }]
+    );
+
+    if (emailResult.success) {
+      res.json({ status: "ok" });
+    } else {
+      res.status(500).json({ error: "Failed to send email", details: emailResult.error });
+    }
+  } catch (err: any) {
+    logToFile(`[API] Failed to send report: ${err.message}`);
+    res.status(500).json({ error: "Failed to send report", message: err.message });
   }
 });
 

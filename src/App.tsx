@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults } from './logic';
-import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
 const Letterhead = () => (
@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v5.9)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v6.0)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -453,9 +453,9 @@ export default function App() {
       } />
 
       <Route path="/thank-you" element={
-        <div className="page-container p-8 md:p-16">
+        <div className="page-container p-8 md:p-16 bg-cream">
           <Letterhead />
-          <main className="flex-1 flex flex-col items-center justify-center text-center py-12">
+          <main className="flex-1 flex flex-col items-center justify-center text-center py-12 max-w-5xl mx-auto">
             <div className="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center text-gold mb-8">
               <CheckCircle2 className="w-10 h-10" />
             </div>
@@ -475,11 +475,11 @@ export default function App() {
               )}
             </div>
 
-            <div className="w-full max-w-4xl bg-white border border-gold/20 shadow-sm overflow-hidden mb-12">
-              <div className="bg-navy p-4 text-center">
-                <h3 className="text-gold font-sans font-bold tracking-[2px] uppercase text-sm">Payment Information</h3>
+            <div className="w-full max-w-4xl bg-white border border-gold/20 shadow-2xl overflow-hidden mb-12 text-left">
+              <div className="bg-navy p-6 text-center">
+                <h3 className="text-gold font-sans font-bold tracking-[3px] uppercase text-sm antialiased">Payment Information</h3>
               </div>
-              <div className="p-6 space-y-8">
+              <div className="p-8 space-y-10">
                 {/* Pricing Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left">
@@ -537,12 +537,11 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="bg-cream p-4 text-center border-t border-gold/10">
-                <p className="text-[9px] text-grey font-bold uppercase tracking-[2px]">
+              <div className="bg-cream p-6 text-center border-t border-gold/10">
+                <p className="text-[10px] text-grey font-bold uppercase tracking-[3px] antialiased">
                   Reference: {BANKING_DETAILS.reference}
                 </p>
               </div>
-      </div>
             </div>
             <button 
               onClick={() => navigate('/')}
@@ -745,8 +744,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 5.9 (FINAL SYNC)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0912</p>
+          <p className="font-bold text-gold mb-2">VERSION: 6.0 (FINAL POLISH)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0935</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
@@ -931,10 +930,32 @@ function AdminResultDetail() {
   if (error) return <div className="p-20 text-center font-bold text-red-600">Error: {error}</div>;
   if (!submission) return <div className="p-20 text-center font-bold text-navy">Loading result...</div>;
 
-  const { results, name } = submission;
+  const { results, name, email } = submission;
   const submittedAt = submission.submitted_at || submission.submittedAt;
   const reportPath = submission.report_url || submission.reportPath;
   const typeInfo = typeDescriptions[results.mbti];
+  const [isSending, setIsSending] = React.useState(false);
+
+  const handleSendReport = async () => {
+    if (!confirm(`Send report to ${email}?`)) return;
+    setIsSending(true);
+    try {
+      const res = await fetch('/api/admin/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: submission.id, email, name, reportUrl: reportPath })
+      });
+      if (res.ok) alert('Report sent successfully!');
+      else {
+        const data = await res.json();
+        alert(`Failed to send report: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      alert('Error sending report.');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="page-container p-8 md:p-16">
@@ -945,14 +966,24 @@ function AdminResultDetail() {
         </Link>
         <div className="text-right flex items-center gap-4">
           {reportPath && (
-            <a 
-              href={reportPath}
-              download
-              className="flex items-center gap-2 bg-gold text-white px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase hover:bg-gold/90 transition-colors"
-            >
-              <Download className="w-3 h-3" />
-              Download Report
-            </a>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSendReport}
+                disabled={isSending}
+                className="flex items-center gap-2 bg-navy text-white px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+              >
+                <Mail className="w-3 h-3" />
+                {isSending ? 'Sending...' : 'Send to Client'}
+              </button>
+              <a 
+                href={reportPath}
+                download
+                className="flex items-center gap-2 bg-gold text-white px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase hover:bg-gold/90 transition-colors"
+              >
+                <Download className="w-3 h-3" />
+                Download
+              </a>
+            </div>
           )}
           <span className="bg-navy text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase">Internal Report</span>
         </div>
