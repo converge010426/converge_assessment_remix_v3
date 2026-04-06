@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v5.7)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v5.9)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -478,7 +478,8 @@ export default function App() {
             <div className="w-full max-w-4xl bg-white border border-gold/20 shadow-sm overflow-hidden mb-12">
               <div className="bg-navy p-4 text-center">
                 <h3 className="text-gold font-sans font-bold tracking-[2px] uppercase text-sm">Payment Information</h3>
-                          <div className="p-6 space-y-8">
+              </div>
+              <div className="p-6 space-y-8">
                 {/* Pricing Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left">
@@ -744,8 +745,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 5.7 (DEEP DIAGNOSTICS)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0840</p>
+          <p className="font-bold text-gold mb-2">VERSION: 5.9 (FINAL SYNC)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0912</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
