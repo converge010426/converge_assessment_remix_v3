@@ -110,24 +110,24 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
     .fillColor(gold)
     .fontSize(18)
     .font('Helvetica-BoldOblique')
-    .text(`${typeInfo.title} • ${typeInfo.subtitle}`, 220, 370);
+    .text(`${typeInfo.title} • ${typeInfo.subtitle}`, 220, 355);
 
   doc
     .fillColor(grey)
     .fontSize(10)
     .font('Helvetica-Bold')
-    .text('VERIFIED PSYCHOLOGICAL ARCHITECTURE', 220, 370, { characterSpacing: 1 });
+    .text('VERIFIED PSYCHOLOGICAL ARCHITECTURE', 220, 385, { characterSpacing: 1 });
 
   // Description
   doc
     .fillColor(dark)
     .fontSize(11)
     .font('Helvetica')
-    .text(typeInfo.description, 50, 450, {
+    .text(typeInfo.description, 50, 470, {
       align: 'justify',
       lineGap: 4,
       width: 495,
-      height: 120, // Limit height to prevent overlap with dimensions
+      height: 100, // Limit height to prevent overlap with dimensions
       ellipsis: true
     });
 
@@ -242,7 +242,7 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   });
 
   // Behavioural Architecture
-  const yArch = Math.max(yPosLeft, yPosRight) + 40;
+  const yArch = Math.min(Math.max(yPosLeft, yPosRight) + 40, 650);
   doc
     .fillColor(navy)
     .fontSize(14)
@@ -256,7 +256,9 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
     .text(`As an ${results.mbti}, your psychological profile suggests a unique combination of ${dimensions[0].label.toLowerCase()} energy and ${dimensions[1].label.toLowerCase()} processing. This architecture manifests as a ${typeInfo.title.toLowerCase()} who values ${typeInfo.strengths[0].toLowerCase()} and ${typeInfo.strengths[1].toLowerCase()}. Your approach to problem-solving is defined by ${typeInfo.strengths[2].toLowerCase()}, which allows you to navigate complex professional landscapes with precision.`, 50, yArch + 30, {
       width: 495,
       align: 'justify',
-      lineGap: 4
+      lineGap: 4,
+      height: 100,
+      ellipsis: true
     });
 
   // Footer
