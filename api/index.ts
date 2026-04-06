@@ -1,5 +1,5 @@
-// VERSION: 4.5 (RLS DIAGNOSTICS)
-// SYNC_ID: 1712412536000
+// VERSION: 4.6 (VISIBILITY PATCH)
+// SYNC_ID: 1712412537000
 import "dotenv/config";
 import express from "express";
 import path from "path";

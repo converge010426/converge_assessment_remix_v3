@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v4.5)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v4.6)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -668,11 +668,20 @@ function AdminDashboard() {
     }
   };
 
+  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string } | null>(null);
+
   React.useEffect(() => {
     console.log('[Dashboard] Fetching results from /api/results...');
     fetch('/api/results')
       .then(async res => {
         console.log('[Dashboard] Response status:', res.status);
+        // Capture diagnostic headers
+        setDiagInfo({
+          status: res.headers.get('X-Supabase-Status') || 'N/A',
+          count: res.headers.get('X-Supabase-Count') || 'N/A',
+          exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A'
+        });
+        
         if (!res.ok) {
           const err = await res.json();
           console.error('[Dashboard] API Error:', err);
@@ -731,13 +740,22 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 4.5 (RLS DIAGNOSTICS)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412536000</p>
+          <p className="font-bold text-gold mb-2">VERSION: 4.6 (VISIBILITY PATCH)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412537000</p>
           <p>DEBUG INFO:</p>
+          <p>Current URL: {window.location.hostname}</p>
           <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.substring(0, 20)}...` : 'NOT SET'}</p>
           <p>Submissions Count: {submissions.length}</p>
           <p>Local History Count: {JSON.parse(localStorage.getItem('submission_history') || '[]').length}</p>
-          <div className="flex gap-4">
+          {diagInfo && (
+            <div className="mt-2 pt-2 border-t border-navy/10 text-gold/80">
+              <p>DB DIAGNOSTICS:</p>
+              <p>HTTP Status: {diagInfo.status}</p>
+              <p>Data Count: {diagInfo.count}</p>
+              <p>Exact DB Count: {diagInfo.exact}</p>
+            </div>
+          )}
+          <div className="flex gap-4 mt-4">
             <button 
               onClick={() => window.location.reload()} 
               className="mt-2 text-gold hover:underline font-bold uppercase tracking-widest"
