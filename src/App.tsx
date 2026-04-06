@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v5.4)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v5.6)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -668,7 +668,7 @@ function AdminDashboard() {
     }
   };
 
-  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, connectionOk: string, connectionError: string } | null>(null);
+  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, connectionOk: string, connectionError: string, urlPreview: string } | null>(null);
 
   React.useEffect(() => {
     console.log('[Dashboard] Fetching results from /api/results...');
@@ -682,7 +682,8 @@ function AdminDashboard() {
           exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A',
           serviceRole: res.headers.get('X-Using-Service-Role') || 'false',
           connectionOk: res.headers.get('X-Connection-Ok') || 'false',
-          connectionError: res.headers.get('X-Connection-Error') || ''
+          connectionError: res.headers.get('X-Connection-Error') || '',
+          urlPreview: res.headers.get('X-Supabase-Url-Preview') || 'N/A'
         });
         
         if (!res.ok) {
@@ -743,8 +744,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 5.4 (FINAL ROUTING FIX)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0705</p>
+          <p className="font-bold text-gold mb-2">VERSION: 5.6 (DIAGNOSTIC ENHANCEMENT)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0758</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
@@ -762,7 +763,8 @@ function AdminDashboard() {
             </div>
           )}
           
-          <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.substring(0, 20)}...` : 'NOT SET'}</p>
+          <p>Supabase URL (Client): {import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.substring(0, 20)}...` : 'NOT SET'}</p>
+          <p>Supabase URL (Backend): {diagInfo?.urlPreview || 'FETCHING...'}</p>
           <p>Submissions Count: {submissions.length}</p>
           <p>Local History Count: {JSON.parse(localStorage.getItem('submission_history') || '[]').length}</p>
           {diagInfo && (

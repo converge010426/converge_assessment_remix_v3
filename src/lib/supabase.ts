@@ -18,6 +18,18 @@ export const getSupabase = (useServiceRole = false) => {
   const supabaseAnonKey = anonKey?.replace(/^[•\s\t]+/, '').trim();
   const supabaseServiceKey = serviceKey?.replace(/^[•\s\t]+/, '').trim();
 
+  // Detect common placeholder mistakes
+  if (supabaseUrl === 'VITE_SUPABASE_URL' || supabaseUrl === 'SUPABASE_URL') {
+    throw new Error(`CRITICAL: Your SUPABASE_URL environment variable is set to the literal string "${supabaseUrl}". You must replace this with your actual Supabase project URL (e.g., https://xyz.supabase.co).`);
+  }
+  if (supabaseAnonKey === 'VITE_SUPABASE_ANON_KEY' || supabaseAnonKey === 'SUPABASE_ANON_KEY') {
+    throw new Error(`CRITICAL: Your SUPABASE_ANON_KEY environment variable is set to a literal placeholder string. You must replace this with your actual Supabase "anon" public key.`);
+  }
+
+  if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
+    throw new Error(`Invalid SUPABASE_URL: "${supabaseUrl}". It must be a valid URL starting with http:// or https://.`);
+  }
+
   if (!supabaseUrl || !supabaseAnonKey) {
     const missing = [];
     if (!supabaseUrl) missing.push('SUPABASE_URL');

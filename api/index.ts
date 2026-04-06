@@ -1,5 +1,5 @@
-// VERSION: 5.4 (FINAL ROUTING FIX)
-// SYNC_ID: SYNC_20260406_0705
+// VERSION: 5.6 (DIAGNOSTIC ENHANCEMENT)
+// SYNC_ID: SYNC_20260406_0758
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -39,8 +39,8 @@ app.get("/api/health", (req, res) => {
   
   res.json({ 
     status: "ok", 
-    version: "5.4 (FINAL ROUTING FIX)",
-    syncId: "SYNC_20260406_0705",
+    version: "5.6 (DIAGNOSTIC ENHANCEMENT)",
+    syncId: "SYNC_20260406_0758",
     environment: process.env.VERCEL ? "vercel" : "local",
     timestamp: new Date().toISOString(),
     env: {
@@ -188,6 +188,7 @@ app.get("/api/results", async (req, res) => {
     res.setHeader('X-Supabase-Status', String(status));
     res.setHeader('X-Supabase-Count', String(data?.length || 0));
     res.setHeader('X-Supabase-Exact-Count', String(count || 0));
+    res.setHeader('X-Supabase-Url-Preview', process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL.substring(0, 25)}...` : 'NONE');
     res.setHeader('X-Using-Service-Role', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'true' : 'false');
     res.setHeader('X-Connection-Ok', String(connectionOk));
     if (connectionError) {
