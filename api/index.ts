@@ -1,5 +1,5 @@
-// VERSION: 4.6 (VISIBILITY PATCH)
-// SYNC_ID: 1712412537000
+// VERSION: 4.9 (CLEAN BUILD)
+// SYNC_ID: 1712412540000
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -147,24 +147,34 @@ app.post("/api/submit", async (req, res) => {
 app.get("/api/results", async (req, res) => {
   logToFile("API: GET /api/results called");
   try {
-    const supabase = getSupabase();
-    // Fetch with explicit count to diagnose empty arrays vs RLS blocks
-    const { data, error, status, statusText, count } = await supabase
+    const supabase = getSupabase(true);
+    
+    // Diagnostic: List all tables to ensure 'submissions' exists and is spelled correctly
+    const { data: tables, error: tableError } = await supabase
+      .from('pg_catalog.pg_tables')
+      .select('tablename')
+      .eq('schemaname', 'public');
+    
+    const tableList = tables?.map((t: any) => t.tablename).join(', ') || 'NONE';
+    logToFile(`Visible Tables: ${tableList}`);
+
+    const { data, error, status, count } = await supabase
       .from('submissions')
       .select('*', { count: 'exact' })
       .order('id', { ascending: false });
 
     if (error) {
       logToFile(`Supabase Fetch Error: ${JSON.stringify(error)}`);
-      return res.status(500).json({ error: error.message, details: error });
+      return res.status(500).json({ error: error.message, details: error, tables: tableList });
     }
     
     logToFile(`Supabase Response: Status ${status}, Count: ${data?.length || 0}, Exact Count: ${count}`);
     
-    // Add debug headers to help frontend understand the state
     res.setHeader('X-Supabase-Status', String(status));
     res.setHeader('X-Supabase-Count', String(data?.length || 0));
     res.setHeader('X-Supabase-Exact-Count', String(count || 0));
+    res.setHeader('X-Using-Service-Role', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'true' : 'false');
+    res.setHeader('X-Visible-Tables', tableList);
     
     res.json(data);
   } catch (error: any) {

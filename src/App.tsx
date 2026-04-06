@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v4.6)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v4.9)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -668,7 +668,7 @@ function AdminDashboard() {
     }
   };
 
-  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string } | null>(null);
+  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, tables: string } | null>(null);
 
   React.useEffect(() => {
     console.log('[Dashboard] Fetching results from /api/results...');
@@ -679,7 +679,9 @@ function AdminDashboard() {
         setDiagInfo({
           status: res.headers.get('X-Supabase-Status') || 'N/A',
           count: res.headers.get('X-Supabase-Count') || 'N/A',
-          exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A'
+          exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A',
+          serviceRole: res.headers.get('X-Using-Service-Role') || 'false',
+          tables: res.headers.get('X-Visible-Tables') || 'N/A'
         });
         
         if (!res.ok) {
@@ -740,8 +742,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 4.6 (VISIBILITY PATCH)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412537000</p>
+          <p className="font-bold text-gold mb-2">VERSION: 4.9 (CLEAN BUILD)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412540000</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.substring(0, 20)}...` : 'NOT SET'}</p>
@@ -753,6 +755,25 @@ function AdminDashboard() {
               <p>HTTP Status: {diagInfo.status}</p>
               <p>Data Count: {diagInfo.count}</p>
               <p>Exact DB Count: {diagInfo.exact}</p>
+              <p>Visible Tables: {diagInfo.tables}</p>
+              <p>RLS Bypass (Service Role): {diagInfo.serviceRole === 'true' ? '✅ ACTIVE' : '❌ NOT SET'}</p>
+              
+              {diagInfo.exact === '0' && submissions.length === 0 && (
+                <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px]">
+                  <p className="font-bold">⚠️ CRITICAL: DATABASE IS EMPTY</p>
+                  <p>Supabase reports 0 rows in 'submissions'.</p>
+                  <p>1. Check if table name is exactly 'submissions' (lowercase).</p>
+                  <p>2. Ensure columns: id, name, email, product, mbti, results, answers, report_url exist.</p>
+                  <p>3. If you just submitted, the data was NOT saved.</p>
+                </div>
+              )}
+              
+              {diagInfo.serviceRole === 'false' && (
+                <div className="mt-2 p-2 bg-gold/10 border border-gold/20 text-gold text-[9px]">
+                  <p className="font-bold">💡 TIP: BYPASS RLS</p>
+                  <p>Add 'SUPABASE_SERVICE_ROLE_KEY' to your environment variables to bypass security policies for this dashboard.</p>
+                </div>
+              )}
             </div>
           )}
           <div className="flex gap-4 mt-4">
