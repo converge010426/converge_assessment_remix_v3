@@ -89,6 +89,15 @@ app.get("/api/admin/test-email", async (req, res) => {
 
 // Diagnostic endpoint for environment variables
 app.get("/api/admin/diagnostics", (req, res) => {
+  const envKeys = Object.keys(process.env).filter(key => 
+    key.startsWith('SMTP_') || 
+    key.startsWith('SUPABASE_') || 
+    key === 'ADMIN_EMAIL' || 
+    key === 'VERCEL' || 
+    key === 'VERCEL_URL' ||
+    key === 'NODE_ENV'
+  );
+
   const diagnostics = {
     VERCEL: !!process.env.VERCEL,
     VERCEL_URL: process.env.VERCEL_URL || 'NOT SET',
@@ -101,7 +110,9 @@ app.get("/api/admin/diagnostics", (req, res) => {
     SMTP_PASS: !!process.env.SMTP_PASS,
     SMTP_FROM: process.env.SMTP_FROM || 'NOT SET',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET (defaults to tomknsn@gmail.com)',
-    NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+    NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+    DETECTED_KEYS: envKeys,
+    HINT: "If SMTP variables show as 'false' or 'NOT SET' but are configured in Vercel, you MUST trigger a new Deployment (Redeploy) for them to take effect."
   };
   res.json(diagnostics);
 });
