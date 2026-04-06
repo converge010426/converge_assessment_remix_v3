@@ -132,7 +132,7 @@ export default function App() {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
         }
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v4.9)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (v5.2)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);
@@ -668,7 +668,7 @@ function AdminDashboard() {
     }
   };
 
-  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, tables: string } | null>(null);
+  const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, connectionOk: string, connectionError: string } | null>(null);
 
   React.useEffect(() => {
     console.log('[Dashboard] Fetching results from /api/results...');
@@ -681,7 +681,8 @@ function AdminDashboard() {
           count: res.headers.get('X-Supabase-Count') || 'N/A',
           exact: res.headers.get('X-Supabase-Exact-Count') || 'N/A',
           serviceRole: res.headers.get('X-Using-Service-Role') || 'false',
-          tables: res.headers.get('X-Visible-Tables') || 'N/A'
+          connectionOk: res.headers.get('X-Connection-Ok') || 'false',
+          connectionError: res.headers.get('X-Connection-Error') || ''
         });
         
         if (!res.ok) {
@@ -742,10 +743,25 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 4.9 (CLEAN BUILD)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412540000</p>
+          <p className="font-bold text-gold mb-2">VERSION: 5.2 (URL GUIDE)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: 1712412543000</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
+          <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
+            ENVIRONMENT: {window.location.hostname.includes('vercel.app') ? '🚀 VERCEL (REAL)' : '🛠 AI STUDIO (PREVIEW)'}
+          </div>
+          
+          {!window.location.hostname.includes('vercel.app') && (
+            <div className="mb-4 p-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">
+              <p className="font-bold">⚠️ YOU ARE IN THE PREVIEW WINDOW</p>
+              <p>This window is for testing code changes. To see your REAL data, you must visit your Vercel URL.</p>
+              <p className="mt-1">1. Go to your Vercel Dashboard.</p>
+              <p>2. Click on your project name.</p>
+              <p>3. Click the **"Visit"** button.</p>
+              <p>4. Add **/admin** to the end of that URL.</p>
+            </div>
+          )}
+          
           <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.substring(0, 20)}...` : 'NOT SET'}</p>
           <p>Submissions Count: {submissions.length}</p>
           <p>Local History Count: {JSON.parse(localStorage.getItem('submission_history') || '[]').length}</p>
@@ -755,7 +771,8 @@ function AdminDashboard() {
               <p>HTTP Status: {diagInfo.status}</p>
               <p>Data Count: {diagInfo.count}</p>
               <p>Exact DB Count: {diagInfo.exact}</p>
-              <p>Visible Tables: {diagInfo.tables}</p>
+              <p>DB Connection: {diagInfo.connectionOk === 'true' ? '✅ OK' : '❌ FAILED'}</p>
+              {diagInfo.connectionError && <p className="text-red-400">Error: {diagInfo.connectionError}</p>}
               <p>RLS Bypass (Service Role): {diagInfo.serviceRole === 'true' ? '✅ ACTIVE' : '❌ NOT SET'}</p>
               
               {diagInfo.exact === '0' && submissions.length === 0 && (
