@@ -479,8 +479,12 @@ export default function App() {
                 <div className="inline-block p-3 bg-gold/10 rounded-full text-gold mb-4">
                   <ShieldCheck className="w-8 h-8" />
                 </div>
+                <div className="mb-2">
+                  <span className="font-sans text-[10px] font-bold tracking-[4px] text-gold uppercase">Step 2 of 2</span>
+                </div>
                 <h2 className="text-3xl text-navy font-bold uppercase tracking-tight mb-2">Define the Role</h2>
-                <p className="text-grey font-bold text-sm uppercase tracking-widest">Converge 3 • Candidate Suitability Analysis</p>
+                <p className="text-grey font-bold text-sm uppercase tracking-widest mb-4">Converge 3 • Candidate Suitability Analysis</p>
+                <p className="text-navy/60 text-xs font-sans font-medium italic">"Now, let's contextualize your results for the specific position."</p>
               </div>
 
               <div className="space-y-6">
@@ -491,7 +495,7 @@ export default function App() {
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     placeholder="e.g. Senior Sales Executive"
-                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/30"
                   />
                 </div>
 
@@ -500,14 +504,14 @@ export default function App() {
                   <select 
                     value={jobEnvironment}
                     onChange={(e) => setJobEnvironment(e.target.value)}
-                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors"
                   >
-                    <option value="">Select Environment...</option>
-                    <option value="High-pressure / Fast-paced">High-pressure / Fast-paced</option>
-                    <option value="Collaborative / Team-oriented">Collaborative / Team-oriented</option>
-                    <option value="Solo / Technical / Focused">Solo / Technical / Focused</option>
-                    <option value="Client-facing / Relationship-based">Client-facing / Relationship-based</option>
-                    <option value="Creative / Unstructured">Creative / Unstructured</option>
+                    <option value="" className="bg-white text-navy">Select Environment...</option>
+                    <option value="High-pressure / Fast-paced" className="bg-white text-navy">High-pressure / Fast-paced</option>
+                    <option value="Collaborative / Team-oriented" className="bg-white text-navy">Collaborative / Team-oriented</option>
+                    <option value="Solo / Technical / Focused" className="bg-white text-navy">Solo / Technical / Focused</option>
+                    <option value="Client-facing / Relationship-based" className="bg-white text-navy">Client-facing / Relationship-based</option>
+                    <option value="Creative / Unstructured" className="bg-white text-navy">Creative / Unstructured</option>
                   </select>
                 </div>
 
@@ -518,7 +522,7 @@ export default function App() {
                     value={jobChallenge}
                     onChange={(e) => setJobChallenge(e.target.value)}
                     placeholder="e.g. Requires high emotional resilience"
-                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/30"
                   />
                 </div>
 
@@ -529,7 +533,7 @@ export default function App() {
                     onChange={(e) => setJobDescription(e.target.value)}
                     placeholder="Paste the job description or key requirements here..."
                     rows={4}
-                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors resize-none"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors resize-none placeholder:text-white/30"
                   />
                 </div>
 

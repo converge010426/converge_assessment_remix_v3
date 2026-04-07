@@ -601,6 +601,13 @@ export async function generateComprehensiveReport(name: string, results: Assessm
     .font('Helvetica-Bold')
     .text('WORKPLACE & GROWTH', 50, 40, { characterSpacing: 2 });
 
+  // Workplace Dynamics Fallback
+  const workplaceDynamics = compDesc.workplace || {
+    asLeader: `As a leader, this ${results.mbti} profile tends to be ${results.mbti.includes('J') ? 'highly organized and goal-oriented' : 'flexible and adaptive'}. They focus on ${results.mbti.includes('T') ? 'logical outcomes' : 'team harmony'} and expect excellence from their team.`,
+    asColleague: `As a colleague, they are likely ${results.mbti.includes('E') ? 'collaborative and outgoing' : 'focused and independent'}. They value ${results.mbti.includes('S') ? 'practicality' : 'innovation'} in their professional relationships.`,
+    asSubordinate: `As a subordinate, they work best when given ${results.mbti.includes('J') ? 'clear structure' : 'creative freedom'}. They respect competence and are motivated by ${results.mbti.includes('F') ? 'appreciation' : 'results'}.`
+  };
+
   doc
     .fillColor(navy)
     .fontSize(14)
@@ -608,24 +615,31 @@ export async function generateComprehensiveReport(name: string, results: Assessm
     .text('Workplace Dynamics', 50, 130);
 
   doc
-    .fillColor(dark)
+    .fillColor(gold)
     .fontSize(10)
     .font('Helvetica-Bold')
-    .text('AS A LEADER', 50, 160)
+    .text('AS A LEADER', 50, 155)
+    .fillColor(dark)
     .font('Helvetica')
-    .text(compDesc.workplace.asLeader, 50, 175, { width: 495, align: 'justify', lineGap: 3 });
+    .text(workplaceDynamics.asLeader, 50, 170, { width: 495, lineGap: 2 });
 
   doc
+    .fillColor(gold)
+    .fontSize(10)
     .font('Helvetica-Bold')
     .text('AS A COLLEAGUE', 50, 240)
+    .fillColor(dark)
     .font('Helvetica')
-    .text(compDesc.workplace.asColleague, 50, 255, { width: 495, align: 'justify', lineGap: 3 });
+    .text(workplaceDynamics.asColleague, 50, 255, { width: 495, lineGap: 2 });
 
   doc
+    .fillColor(gold)
+    .fontSize(10)
     .font('Helvetica-Bold')
-    .text('AS A SUBORDINATE', 50, 320)
+    .text('AS A SUBORDINATE', 50, 325)
+    .fillColor(dark)
     .font('Helvetica')
-    .text(compDesc.workplace.asSubordinate, 50, 335, { width: 495, align: 'justify', lineGap: 3 });
+    .text(workplaceDynamics.asSubordinate, 50, 340, { width: 495, lineGap: 2 });
 
   doc
     .fillColor(navy)
@@ -804,10 +818,10 @@ export async function generateComprehensiveReport(name: string, results: Assessm
       .text('Suitability Indicators', 50, 370);
     
     const suitabilityPoints = [
-      { label: 'Leadership Potential', value: results.ei.socialSkills > 70 ? 'High - Natural influencer' : 'Moderate - Individual contributor focus' },
-      { label: 'Stress Tolerance', value: results.ei.selfRegulation > 65 ? 'Stable - High resilience' : 'Adaptive - Needs supportive environment' },
-      { label: 'Strategic Thinking', value: results.mbti.includes('N') ? 'Exceptional - Future oriented' : 'Practical - Detail oriented' },
-      { label: 'Team Collaboration', value: results.mbti.includes('E') ? 'Active - Energized by groups' : 'Focused - Prefers deep work' }
+      { label: 'Leadership Potential', value: results.ei.socialSkills > 70 ? 'High' : 'Moderate', detail: results.ei.socialSkills > 70 ? 'Natural influencer' : 'Individual contributor focus' },
+      { label: 'Stress Tolerance', value: results.ei.selfRegulation > 65 ? 'Stable' : 'Adaptive', detail: results.ei.selfRegulation > 65 ? 'High resilience' : 'Needs supportive environment' },
+      { label: 'Strategic Thinking', value: results.mbti.includes('N') ? 'Exceptional' : 'Practical', detail: results.mbti.includes('N') ? 'Future oriented' : 'Detail oriented' },
+      { label: 'Team Collaboration', value: results.mbti.includes('E') ? 'Active' : 'Focused', detail: results.mbti.includes('E') ? 'Energized by groups' : 'Focused - Prefers deep work' }
     ];
     
     let suitY = 400;
@@ -819,8 +833,13 @@ export async function generateComprehensiveReport(name: string, results: Assessm
         .text(point.label + ':', 50, suitY);
       
       doc
-        .font('Helvetica')
+        .fillColor(gold)
         .text(point.value, 180, suitY);
+      
+      doc
+        .fillColor(grey)
+        .font('Helvetica')
+        .text(' — ' + point.detail, doc.x + 5, suitY);
       
       suitY += 25;
     });
@@ -846,7 +865,7 @@ export async function generateComprehensiveReport(name: string, results: Assessm
       .fillColor(grey)
       .fontSize(8)
       .font('Helvetica')
-      .text(`© ${new Date().getFullYear()} CONVERGE™ • PAGE ${i + 1}`, 50, 780, { align: 'center' });
+      .text(`© ${new Date().getFullYear()} CONVERGE™ • SYSTEM ${SYSTEM_VERSION} • PAGE ${i + 1}`, 50, 780, { align: 'center' });
   }
 
   doc.end();
