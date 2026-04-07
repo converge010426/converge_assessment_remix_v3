@@ -143,7 +143,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.post("/api/submit", async (req, res) => {
-  const { name, email, answers, results, product } = req.body;
+  const { name, email, answers, results, product, jobTitle, jobEnvironment, jobChallenge, jobDescription } = req.body;
   
   logToFile(`[API] SUBMIT START: ${name} (${email})`);
   
@@ -164,7 +164,11 @@ app.post("/api/submit", async (req, res) => {
       mbti: String(results.mbti),
       results: results, 
       answers: answers, 
-      report_url: null 
+      report_url: null,
+      job_title: jobTitle || null,
+      job_environment: jobEnvironment || null,
+      job_challenge: jobChallenge || null,
+      job_description: jobDescription || null
     };
 
     let finalData = null;
@@ -225,8 +229,9 @@ app.post("/api/submit", async (req, res) => {
     try {
       logToFile(`[API] Starting report generation for ID ${submissionId}...`);
       let reportPath;
+      const jobData = { jobTitle, jobEnvironment, jobChallenge, jobDescription };
       if (product === 'comprehensive' || product === 'recruiter') {
-        reportPath = await generateComprehensiveReport(name, results, product === 'recruiter');
+        reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
       } else {
         reportPath = await generateMBTIReport(name, results);
       }
@@ -308,7 +313,13 @@ app.post("/api/admin/send-report", async (req, res) => {
         const name = sub.name;
 
         if (product === 'comprehensive' || product === 'recruiter') {
-          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter');
+          const jobData = {
+            jobTitle: sub.job_title,
+            jobEnvironment: sub.job_environment,
+            jobChallenge: sub.job_challenge,
+            jobDescription: sub.job_description
+          };
+          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
         } else {
           reportPath = await generateMBTIReport(name, results);
         }

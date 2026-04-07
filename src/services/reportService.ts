@@ -360,7 +360,7 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   });
 }
 
-export async function generateComprehensiveReport(name: string, results: AssessmentResults, isRecruiter: boolean = false): Promise<string> {
+export async function generateComprehensiveReport(name: string, results: AssessmentResults, isRecruiter: boolean = false, jobData?: any): Promise<string> {
   const doc = new PDFDocument({
     margin: 50,
     size: 'A4',
@@ -737,31 +737,71 @@ export async function generateComprehensiveReport(name: string, results: Assessm
     doc.addPage();
     
     doc
-      .fillColor(navy)
+      .rect(0, 0, doc.page.width, 100)
+      .fill(navy);
+
+    doc
+      .fillColor(gold)
       .fontSize(24)
       .font('Helvetica-Bold')
-      .text('RECRUITER SUITABILITY ANALYSIS', 50, 50);
-    
+      .text('SUITABILITY ANALYSIS', 50, 40, { characterSpacing: 2 });
+
     doc
-      .rect(50, 85, 495, 2)
-      .fill(gold);
+      .fillColor(dark)
+      .fontSize(14)
+      .font('Helvetica-Bold')
+      .text('Role Definition', 50, 130);
+
+    // Job Context Box
+    doc
+      .rect(50, 155, 495, 100)
+      .fill(lightGrey);
+
+    doc
+      .fillColor(grey)
+      .fontSize(8)
+      .font('Helvetica-Bold')
+      .text('TARGET POSITION', 65, 170, { characterSpacing: 1 })
+      .fillColor(navy)
+      .fontSize(14)
+      .text(jobData?.jobTitle?.toUpperCase() || 'NOT SPECIFIED', 65, 185);
+
+    doc
+      .fillColor(grey)
+      .fontSize(8)
+      .font('Helvetica-Bold')
+      .text('ENVIRONMENT', 300, 170, { characterSpacing: 1 })
+      .fillColor(navy)
+      .fontSize(12)
+      .text(jobData?.jobEnvironment || 'NOT SPECIFIED', 300, 185);
+
+    doc
+      .fillColor(grey)
+      .fontSize(8)
+      .font('Helvetica-Bold')
+      .text('KEY CHALLENGE', 65, 220, { characterSpacing: 1 })
+      .fillColor(dark)
+      .fontSize(10)
+      .font('Helvetica')
+      .text(jobData?.jobChallenge || 'NOT SPECIFIED', 65, 235);
+
+    doc
+      .fillColor(navy)
+      .fontSize(14)
+      .font('Helvetica-Bold')
+      .text('Executive Summary for Hiring Managers', 50, 280);
     
     doc
       .fillColor(dark)
-      .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Executive Summary for Hiring Managers', 50, 110);
-    
-    doc
       .font('Helvetica')
       .fontSize(10)
-      .text(`Candidate ${name} presents a robust ${results.mbti} profile, characterized by high-level cognitive agility and ${results.mbti.includes('J') ? 'structured execution' : 'adaptive problem-solving'}.`, 50, 135, { width: 495, lineGap: 4 });
+      .text(`Candidate ${name} presents a robust ${results.mbti} profile, characterized by high-level cognitive agility and ${results.mbti.includes('J') ? 'structured execution' : 'adaptive problem-solving'}. In the context of a ${jobData?.jobEnvironment || 'professional'} environment, their natural tendencies suggest a strong alignment with roles requiring ${results.mbti.includes('T') ? 'analytical rigor' : 'interpersonal empathy'}.`, 50, 305, { width: 495, lineGap: 4, align: 'justify' });
     
     doc
       .fillColor(navy)
       .fontSize(12)
       .font('Helvetica-Bold')
-      .text('Job Specific Suitability Indicators', 50, 180);
+      .text('Suitability Indicators', 50, 370);
     
     const suitabilityPoints = [
       { label: 'Leadership Potential', value: results.ei.socialSkills > 70 ? 'High - Natural influencer' : 'Moderate - Individual contributor focus' },
@@ -770,7 +810,7 @@ export async function generateComprehensiveReport(name: string, results: Assessm
       { label: 'Team Collaboration', value: results.mbti.includes('E') ? 'Active - Energized by groups' : 'Focused - Prefers deep work' }
     ];
     
-    let suitY = 210;
+    let suitY = 400;
     suitabilityPoints.forEach(point => {
       doc
         .fillColor(dark)
@@ -789,13 +829,13 @@ export async function generateComprehensiveReport(name: string, results: Assessm
       .fillColor(navy)
       .fontSize(12)
       .font('Helvetica-Bold')
-      .text('Developmental Recommendation', 50, suitY + 20);
+      .text('Role-Specific Recommendation', 50, suitY + 20);
     
     doc
       .fillColor(dark)
       .font('Helvetica')
       .fontSize(10)
-      .text(`Based on the integrated psychological architecture, this candidate is best suited for roles requiring ${results.mbti.includes('T') ? 'analytical rigor' : 'interpersonal empathy'} and ${results.mbti.includes('J') ? 'systematic organization' : 'flexible innovation'}.`, 50, suitY + 45, { width: 495, lineGap: 4 });
+      .text(`Based on the integrated psychological architecture and the defined challenge (${jobData?.jobChallenge || 'standard operations'}), this candidate is ${results.ei.selfAwareness > 60 ? 'highly recommended' : 'recommended with support'} for the ${jobData?.jobTitle || 'position'}. Their ${results.mbti.includes('J') ? 'systematic organization' : 'flexible innovation'} will be a key asset in managing the ${jobData?.jobEnvironment || 'workplace'} dynamics.`, 50, suitY + 45, { width: 495, lineGap: 4, align: 'justify' });
   }
 
   // Footer on all pages

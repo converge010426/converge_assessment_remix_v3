@@ -46,6 +46,12 @@ export default function App() {
   const [userEmail, setUserEmail] = React.useState('');
   const [selectedProduct, setSelectedProduct] = React.useState<'mbti' | 'comprehensive' | 'recruiter'>('mbti');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
+  // Job Context State for Converge 3
+  const [jobTitle, setJobTitle] = React.useState('');
+  const [jobEnvironment, setJobEnvironment] = React.useState('');
+  const [jobChallenge, setJobChallenge] = React.useState('');
+  const [jobDescription, setJobDescription] = React.useState('');
 
   React.useEffect(() => {
     console.log('[Frontend] Environment Check:');
@@ -64,7 +70,7 @@ export default function App() {
     }
   };
 
-  const submitAssessment = async () => {
+  const submitAssessment = async (jobData?: any) => {
     setIsSubmitting(true);
     const results = calculateResults(answers);
     
@@ -87,7 +93,8 @@ export default function App() {
       email: userEmail,
       product: selectedProduct,
       answersCount: Object.keys(answers).length,
-      mbti: results.mbti
+      mbti: results.mbti,
+      jobData
     });
     
     try {
@@ -99,7 +106,8 @@ export default function App() {
           email: userEmail,
           answers,
           results: normalizedResults,
-          product: selectedProduct
+          product: selectedProduct,
+          ...jobData
         })
       });
       
@@ -439,14 +447,106 @@ export default function App() {
 
               {currentQuestionIndex === questions.length - 1 && answers[questions[currentQuestionIndex].id] && (
                 <button 
-                  onClick={submitAssessment}
+                  onClick={() => {
+                    if (selectedProduct === 'recruiter') {
+                      navigate('/job-context');
+                    } else {
+                      submitAssessment();
+                    }
+                  }}
                   disabled={isSubmitting}
                   className="bg-gold text-white px-10 py-4 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold/90 transition-all shadow-lg disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Submitting...' : 'SUBMIT'}
+                  {isSubmitting ? 'Submitting...' : (selectedProduct === 'recruiter' ? 'NEXT: JOB CONTEXT' : 'SUBMIT')}
                 </button>
               )}
             </div>
+          </main>
+          <Footer />
+        </div>
+      } />
+
+      <Route path="/job-context" element={
+        <div className="page-container p-8 md:p-16 bg-cream">
+          <Letterhead />
+          <main className="flex-1 max-w-2xl mx-auto w-full py-12">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-10 border border-gold/20 shadow-2xl"
+            >
+              <div className="mb-8 text-center">
+                <div className="inline-block p-3 bg-gold/10 rounded-full text-gold mb-4">
+                  <ShieldCheck className="w-8 h-8" />
+                </div>
+                <h2 className="text-3xl text-navy font-bold uppercase tracking-tight mb-2">Define the Role</h2>
+                <p className="text-grey font-bold text-sm uppercase tracking-widest">Converge 3 • Candidate Suitability Analysis</p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-sans text-[10px] font-bold tracking-[2px] text-grey uppercase mb-2">Job Title</label>
+                  <input 
+                    type="text" 
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="e.g. Senior Sales Executive"
+                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-sans text-[10px] font-bold tracking-[2px] text-grey uppercase mb-2">Primary Environment</label>
+                  <select 
+                    value={jobEnvironment}
+                    onChange={(e) => setJobEnvironment(e.target.value)}
+                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                  >
+                    <option value="">Select Environment...</option>
+                    <option value="High-pressure / Fast-paced">High-pressure / Fast-paced</option>
+                    <option value="Collaborative / Team-oriented">Collaborative / Team-oriented</option>
+                    <option value="Solo / Technical / Focused">Solo / Technical / Focused</option>
+                    <option value="Client-facing / Relationship-based">Client-facing / Relationship-based</option>
+                    <option value="Creative / Unstructured">Creative / Unstructured</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-sans text-[10px] font-bold tracking-[2px] text-grey uppercase mb-2">Key Challenge</label>
+                  <input 
+                    type="text" 
+                    value={jobChallenge}
+                    onChange={(e) => setJobChallenge(e.target.value)}
+                    placeholder="e.g. Requires high emotional resilience"
+                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-sans text-[10px] font-bold tracking-[2px] text-grey uppercase mb-2">Job Description (Optional)</label>
+                  <textarea 
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste the job description or key requirements here..."
+                    rows={4}
+                    className="w-full p-4 bg-cream border border-gold/20 focus:border-gold outline-none font-sans font-black transition-colors resize-none"
+                  />
+                </div>
+
+                <button 
+                  onClick={() => submitAssessment({
+                    jobTitle,
+                    jobEnvironment,
+                    jobChallenge,
+                    jobDescription
+                  })}
+                  disabled={isSubmitting || !jobTitle || !jobEnvironment}
+                  className="w-full bg-navy text-white px-8 py-4 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-navy/90 transition-all shadow-lg disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Processing Analysis...' : 'Complete Analysis'}
+                </button>
+              </div>
+            </motion.div>
           </main>
           <Footer />
         </div>
