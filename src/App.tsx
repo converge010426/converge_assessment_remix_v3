@@ -132,15 +132,20 @@ export default function App() {
       } else {
         let errorMessage = 'There was an error submitting your assessment. Please try again.';
         let errorDetails = '';
+        let rawBody = '';
+        
         try {
-          const errorData = await response.json();
+          rawBody = await response.text();
+          const errorData = JSON.parse(rawBody);
           errorMessage = errorData.message || errorMessage;
           errorDetails = errorData.details || JSON.stringify(errorData);
         } catch (e) {
           errorMessage = `Server Error (${response.status}): ${response.statusText || 'Unknown error'}`;
+          errorDetails = rawBody || 'No additional details available.';
         }
+        
         console.error('[Frontend] Submission failed:', errorMessage, errorDetails);
-        alert(`SUBMISSION FAILED (v6.0)\n\nError: ${errorMessage}\nDetails: ${errorDetails}\n\nPlease take a screenshot of this and send it to me.`);
+        alert(`SUBMISSION FAILED (${SYSTEM_VERSION})\n\nError: ${errorMessage}\n\nDetails: ${errorDetails.substring(0, 500)}${errorDetails.length > 500 ? '...' : ''}\n\nPlease take a screenshot of this and send it to me.`);
       }
     } catch (error: any) {
       console.error('[Frontend] Network error during submission:', error);

@@ -1,5 +1,5 @@
-// VERSION: 6.7 (SMTP DIAGNOSTICS)
-// SYNC_ID: SYNC_20260406_1405
+// VERSION: 7.3 (ROBUST DB & FAST SMTP)
+// SYNC_ID: SYNC_20260408_0715
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import nodemailer from "nodemailer";
 import { generateMBTIReport, generateComprehensiveReport } from "../src/services/reportService.js";
-import { generateHeritageReport } from "../src/services/heritageService.js";
 import { getSupabase } from "../src/lib/supabase.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,10 +48,6 @@ async function sendEmail(to: string, subject: string, text: string, attachments:
   });
 
   try {
-    // Verify connection first
-    await transporter.verify();
-    logToFile("[API] SMTP Connection verified successfully.");
-
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to,
@@ -176,6 +171,7 @@ app.post("/api/submit", async (req, res) => {
     let finalError = null;
     let finalStatus = null;
 
+    logToFile(`[API] Attempting primary insert for ${name}...`);
     const { data: firstData, error: firstError, status: firstStatus } = await supabase
       .from('submissions')
       .insert([payload])
@@ -185,22 +181,58 @@ app.post("/api/submit", async (req, res) => {
     finalError = firstError;
     finalStatus = firstStatus;
 
-    // If it failed, try stringifying the complex objects (for TEXT columns)
+    // If it failed, try a series of fallbacks
     if (firstError) {
-      logToFile(`[API] First attempt failed (${firstError.message}), trying stringified payload...`);
+      logToFile(`[API] Primary insert failed: ${firstError.message} (Code: ${firstError.code})`);
+      
+      // Fallback 1: Try stringifying complex objects (for older TEXT columns)
+      logToFile(`[API] Fallback 1: Trying stringified payload...`);
       const stringifiedPayload = {
         ...payload,
         results: JSON.stringify(results),
         answers: JSON.stringify(answers)
       };
-      const { data: retryData, error: retryError, status: retryStatus } = await supabase
+      const { data: retry1Data, error: retry1Error, status: retry1Status } = await supabase
         .from('submissions')
         .insert([stringifiedPayload])
         .select();
       
-      finalData = retryData;
-      finalError = retryError;
-      finalStatus = retryStatus;
+      if (!retry1Error) {
+        finalData = retry1Data;
+        finalError = null;
+        finalStatus = retry1Status;
+        logToFile(`[API] Fallback 1 SUCCESS.`);
+      } else {
+        logToFile(`[API] Fallback 1 failed: ${retry1Error.message}`);
+        
+        // Fallback 2: Try removing job-specific columns (in case they don't exist in DB)
+        logToFile(`[API] Fallback 2: Trying minimal payload (no job columns)...`);
+        const minimalPayload = {
+          name,
+          email,
+          product: String(product),
+          mbti: String(results.mbti),
+          results: typeof results === 'object' ? JSON.stringify(results) : results,
+          answers: typeof answers === 'object' ? JSON.stringify(answers) : answers,
+          report_url: null
+        };
+        
+        const { data: retry2Data, error: retry2Error, status: retry2Status } = await supabase
+          .from('submissions')
+          .insert([minimalPayload])
+          .select();
+          
+        if (!retry2Error) {
+          finalData = retry2Data;
+          finalError = null;
+          finalStatus = retry2Status;
+          logToFile(`[API] Fallback 2 SUCCESS.`);
+        } else {
+          logToFile(`[API] Fallback 2 failed: ${retry2Error.message}`);
+          finalError = retry2Error;
+          finalStatus = retry2Status;
+        }
+      }
     }
 
     if (finalError) {
@@ -462,47 +494,6 @@ app.delete("/api/results/:id", async (req, res) => {
       error: 'Failed to delete submission',
       details: error.message || error.details || String(error)
     });
-  }
-});
-
-app.post("/api/heritage/submit", async (req, res) => {
-  const { familyName, subjectName, commissionerName, theme, lineage, origin, motto, stories } = req.body;
-  logToFile(`[API] Heritage submission received for family: ${familyName}`);
-
-  try {
-    const reportPath = await generateHeritageReport({
-      familyName,
-      subjectName,
-      commissionerName,
-      theme,
-      lineage: lineage || [],
-      origin: origin || { meaning: '', history: '' },
-      motto: motto || { latin: '', english: '' },
-      stories: stories || []
-    });
-
-    const reportUrl = `/api/reports/${path.basename(reportPath)}`;
-    
-    // Attempt to save to Supabase if configured
-    try {
-      const supabase = getSupabase(true);
-      await supabase.from('heritage_submissions').insert([{
-        family_name: familyName,
-        subject_name: subjectName,
-        commissioner_name: commissionerName,
-        theme,
-        lineage_data: lineage,
-        stories_data: stories,
-        report_url: reportUrl
-      }]);
-    } catch (dbErr) {
-      logToFile(`[API] Supabase save failed (likely table not ready): ${dbErr}`);
-    }
-
-    res.json({ status: "ok", reportUrl });
-  } catch (error: any) {
-    logToFile(`[API] Heritage generation error: ${error.message}`);
-    res.status(500).json({ error: error.message });
   }
 });
 
