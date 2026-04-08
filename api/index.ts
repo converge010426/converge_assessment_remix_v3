@@ -471,7 +471,7 @@ app.post("/api/admin/send-report", async (req, res) => {
     const emailResult = await sendEmail(
       email,
       `Your CONVERGE™ Integrated Psychological Protocol: ${name}`,
-      `Dear ${name},\n\nThank you for your patience while I personally reviewed your assessment results.\n\nI have completed the final triangulation of your MBTI, Big Five, and Emotional Intelligence markers. Your integrated psychological protocol is now verified and attached to this email as a PDF.\n\nThis report provides a deep architectural view of your cognitive preferences and professional suitability. I trust you will find these insights valuable for your continued growth and career strategy.\n\nShould you have any specific questions regarding the findings, please feel free to reach out.\n\nBest regards,\n\nThomas Knoesen\nCONVERGE™ | Psychological Architecture`,
+      `Dear ${name},\n\nThank you again for completing the CONVERGE™ assessment protocol.\n\nI have completed the final triangulation of your psychological markers. Your verified report is attached to this email as a PDF.\n\nPlease note that this MBTI profile is only one of three specialized reports we provide. Our frameworks are designed to fulfill specific roles towards integrated psychological insight, executive advantage, and transformational growth.\n\nIn particular, our Candidate Suitability Report (Converge 3) can significantly enhance hiring decisions by contextualizing these results against specific organizational challenges.\n\nI trust you will find these insights valuable for your professional strategy.\n\nBest regards,\n\nThomas Knoesen\nCONVERGE™ | Psychological Architecture`,
       [{ filename: `Converge_Report_${name.replace(/\s+/g, '_')}.pdf`, path: reportPath }]
     );
 

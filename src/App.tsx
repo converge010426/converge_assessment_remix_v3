@@ -777,6 +777,44 @@ function AdminDashboard() {
     }
   };
 
+  const handleSendReport = async (e: React.MouseEvent, sub: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm(`Send report to ${sub.name} (${sub.email})?`)) return;
+
+    const btn = e.currentTarget as HTMLButtonElement;
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'SENDING...';
+
+    try {
+      const res = await fetch('/api/admin/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: sub.id, 
+          email: sub.email, 
+          name: sub.name, 
+          reportUrl: sub.report_url || sub.reportPath 
+        })
+      });
+
+      if (res.ok) {
+        alert('Report sent successfully!');
+        setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, email_sent: true } : s));
+      } else {
+        const err = await res.json();
+        alert(`Failed to send: ${err.details || err.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.innerText = originalText;
+    }
+  };
+
   const [diagInfo, setDiagInfo] = React.useState<{ status: string, count: string, exact: string, serviceRole: string, connectionOk: string, connectionError: string, urlPreview: string } | null>(null);
 
   React.useEffect(() => {
@@ -1010,16 +1048,25 @@ function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-3 mt-2">
                     {(sub.reportPath || sub.report_url) ? (
-                      <a 
-                        href={sub.reportPath || sub.report_url} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1 bg-gold/10 text-gold px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase hover:bg-gold hover:text-white transition-colors border border-gold/20"
-                      >
-                        <FileText className="w-2 h-2" />
-                        Preview Report
-                      </a>
+                      <>
+                        <a 
+                          href={sub.reportPath || sub.report_url} 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 bg-gold/10 text-gold px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase hover:bg-gold hover:text-white transition-colors border border-gold/20"
+                        >
+                          <FileText className="w-2 h-2" />
+                          Preview Report
+                        </a>
+                        <button
+                          onClick={(e) => handleSendReport(e, sub)}
+                          className={`flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase transition-colors border ${sub.email_sent ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-navy text-white border-navy hover:bg-gold hover:border-gold'}`}
+                        >
+                          <Mail className="w-2 h-2" />
+                          {sub.email_sent ? 'SENT' : 'SEND TO CLIENT'}
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={async (e) => {
@@ -1245,15 +1292,22 @@ function AdminResultDetail() {
             </span>
           )}
           <div className="flex gap-2">
-            <button
-              onClick={handleSendReport}
-              disabled={isSending}
-              className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
-                ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
-            >
-              <Mail className="w-3 h-3" />
-              {isSending ? 'Sending...' : 'Approve & Send'}
-            </button>
+            <div className="relative group">
+              <button
+                onClick={handleSendReport}
+                disabled={isSending}
+                className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
+                  ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
+              >
+                <Mail className="w-3 h-3" />
+                {isSending ? 'Sending...' : 'Approve & Send'}
+              </button>
+              {!reviewChecked && (
+                <div className="absolute top-full right-0 mt-1 hidden group-hover:block bg-navy text-white text-[7px] px-2 py-1 whitespace-nowrap z-10">
+                  Complete checklist below to enable sending
+                </div>
+              )}
+            </div>
             {reportPath ? (
               <a 
                 href={reportPath}
