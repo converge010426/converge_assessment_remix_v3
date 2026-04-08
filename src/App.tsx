@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults } from './logic';
-import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2 } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
 const Letterhead = () => (
@@ -1066,11 +1066,17 @@ function AdminResultDetail() {
       })
       .then(data => {
         const found = data.find((s: any) => s.id.toString() === id);
-        if (found && found.results && typeof found.results === 'string') {
-          try {
-            found.results = JSON.parse(found.results);
-          } catch (e) {
-            console.error('Failed to parse results JSON:', e);
+        if (found) {
+          if (found.results && typeof found.results === 'string') {
+            try {
+              found.results = JSON.parse(found.results);
+            } catch (e) {
+              console.error('Failed to parse results JSON:', e);
+              found.results = { mbti: found.mbti || 'Unknown' };
+            }
+          }
+          if (!found.results) {
+            found.results = { mbti: found.mbti || 'Unknown' };
           }
         }
         setSubmission(found);
@@ -1090,8 +1096,16 @@ function AdminResultDetail() {
   const typeInfo = results?.mbti ? typeDescriptions[results.mbti] : null;
   const [isSending, setIsSending] = React.useState(false);
   const [reviewChecked, setReviewChecked] = React.useState(false);
+  const [checklist, setChecklist] = React.useState<Record<number, boolean>>({});
   const [adminNotes, setAdminNotes] = React.useState(submission.admin_notes || '');
   const [isSavingNotes, setIsSavingNotes] = React.useState(false);
+
+  const handleChecklistChange = (index: number, checked: boolean) => {
+    const newChecklist = { ...checklist, [index]: checked };
+    setChecklist(newChecklist);
+    const allChecked = [0, 1, 2, 3].every(i => newChecklist[i]);
+    setReviewChecked(allChecked);
+  };
 
   const [isGenerating, setIsGenerating] = React.useState(false);
 
@@ -1231,10 +1245,8 @@ function AdminResultDetail() {
                 <input 
                   type="checkbox" 
                   className="w-4 h-4 accent-gold"
-                  onChange={(e) => {
-                    const allChecked = Array.from(document.querySelectorAll('input[type="checkbox"].accent-gold')).every((el: any) => el.checked);
-                    setReviewChecked(allChecked);
-                  }}
+                  checked={!!checklist[i]}
+                  onChange={(e) => handleChecklistChange(i, e.target.checked)}
                 />
                 <span className="text-xs text-navy font-medium group-hover:text-gold transition-colors">{item}</span>
               </label>
