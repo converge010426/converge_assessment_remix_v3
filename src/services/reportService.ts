@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { AssessmentResults, typeDescriptions } from '../logic.js';
 import { comprehensiveDescriptions } from '../comprehensiveDescriptions.js';
-import settings from '../../CONVERGE_SETTINGS.json';
+import settings from '../../CONVERGE_SETTINGS.json' with { type: 'json' };
 
 const SYSTEM_VERSION = settings.SYSTEM_VERSION;
 
