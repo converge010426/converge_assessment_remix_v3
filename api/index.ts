@@ -1,13 +1,16 @@
-// VERSION: 7.3 (ROBUST DB & FAST SMTP)
-// SYNC_ID: SYNC_20260408_0715
-import "dotenv/config";
+// VERSION: 7.4 (DYNAMIC IMPORTS & VERCEL OPTIMIZED)
+// SYNC_ID: SYNC_20260408_0740
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import nodemailer from "nodemailer";
-import { generateMBTIReport, generateComprehensiveReport } from "../src/services/reportService.js";
 import { getSupabase } from "../src/lib/supabase.js";
+
+// Dynamic imports for heavy services to prevent timeout on cold start
+const getReportServices = async () => {
+  return await import("../src/services/reportService.js");
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,8 +126,8 @@ app.get("/api/health", (req, res) => {
   
   res.json({ 
     status: "ok", 
-    version: "6.0 (FINAL POLISH)",
-    syncId: "SYNC_20260406_0935",
+    version: "7.4 (VERCEL OPTIMIZED)",
+    syncId: "SYNC_20260408_0740",
     environment: process.env.VERCEL ? "vercel" : "local",
     timestamp: new Date().toISOString(),
     env: {
@@ -133,7 +136,8 @@ app.get("/api/health", (req, res) => {
       hasServiceKey,
       serviceKeyPreview,
       nodeEnv: process.env.NODE_ENV,
-      vercel: !!process.env.VERCEL
+      vercel: !!process.env.VERCEL,
+      smtpHost: !!process.env.SMTP_HOST
     }
   });
 });
@@ -142,6 +146,15 @@ app.post("/api/submit", async (req, res) => {
   const { name, email, answers, results, product, jobTitle, jobEnvironment, jobChallenge, jobDescription } = req.body;
   
   logToFile(`[API] SUBMIT START: ${name} (${email})`);
+  
+  // Environment check
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    logToFile("[API] ERROR: Missing Supabase environment variables in Vercel.");
+    return res.status(500).json({ 
+      error: "CONFIGURATION_ERROR", 
+      message: "Supabase environment variables are missing. Please check Vercel Project Settings." 
+    });
+  }
   
   if (!name || !email || !results) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -306,6 +319,7 @@ app.post("/api/admin/send-report", async (req, res) => {
   }
 
   try {
+    const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
     const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
     const fileName = path.basename(reportUrl);
     let reportPath = path.join(reportsDir, fileName);

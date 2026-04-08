@@ -853,8 +853,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 6.0 (FINAL POLISH)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260406_0935</p>
+          <p className="font-bold text-gold mb-2">VERSION: 7.4 (VERCEL OPTIMIZED)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260408_0740</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
