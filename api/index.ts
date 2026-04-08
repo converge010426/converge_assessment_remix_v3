@@ -271,9 +271,49 @@ app.post("/api/submit", async (req, res) => {
     const submissionId = finalData[0].id;
     logToFile(`[API] INSERT SUCCESS: ID ${submissionId}`);
 
-    // 4. Send fast notification to admin (NO ATTACHMENT)
+    // 4. Trigger report generation (Attempt fast generation during submission)
+    let initialReportUrl = null;
     try {
-      logToFile(`[API] Sending fast notification for ID ${submissionId}...`);
+      logToFile(`[API] Triggering initial report generation for ID ${submissionId}...`);
+      const generatePromise = (async () => {
+        const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
+        let reportPath;
+        if (product === 'comprehensive' || product === 'recruiter') {
+          const jobData = {
+            jobTitle: req.body.jobTitle,
+            jobEnvironment: req.body.jobEnvironment,
+            jobChallenge: req.body.jobChallenge,
+            jobDescription: req.body.jobDescription
+          };
+          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
+        } else {
+          reportPath = await generateMBTIReport(name, results);
+        }
+        const reportUrl = `/api/reports/${path.basename(reportPath)}`;
+        const supabase = getSupabase(true);
+        await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
+        return reportUrl;
+      })();
+
+      // Wait up to 7 seconds for the report to generate. 
+      // This is enough for most reports but short enough to avoid Vercel's 10s timeout.
+      initialReportUrl = await Promise.race([
+        generatePromise,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 7000))
+      ]);
+      
+      if (initialReportUrl) {
+        logToFile(`[API] Initial report generated successfully: ${initialReportUrl}`);
+      } else {
+        logToFile(`[API] Initial report generation timed out. Admin will need to generate in dashboard.`);
+      }
+    } catch (genErr: any) {
+      logToFile(`[API] Initial generation error: ${genErr.message}`);
+    }
+
+    // 5. Send fast notification to admin
+    try {
+      logToFile(`[API] Sending notification for ID ${submissionId}...`);
       const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
       
       const emailResult = await sendEmail(
@@ -286,10 +326,13 @@ Email: ${email}
 Type: ${results.mbti}
 Product: ${product}
 
-Please verify payment and then send the report manually via the Admin Dashboard:
-${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/result/${submissionId}` : `Check Admin Dashboard for ID ${submissionId}`}
+${initialReportUrl 
+  ? `REPORT GENERATED: https://${process.env.VERCEL_URL || req.headers.host}${initialReportUrl}` 
+  : `REPORT PENDING: PDF generation timed out during submission. Please generate it in the Admin Dashboard.`}
 
-(Note: PDF generation is now handled on-demand in the dashboard to ensure fast submissions and prevent timeouts.)`
+Admin Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/result/${submissionId}` : `Check Admin Dashboard for ID ${submissionId}`}
+
+(Note: If the report was not generated during submission, it will be automatically generated when you open the result in the dashboard.)`
       );
       
       if (emailResult.success) {

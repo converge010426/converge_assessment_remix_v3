@@ -1021,9 +1021,38 @@ function AdminDashboard() {
                         Preview Report
                       </a>
                     ) : (
-                      <span className="text-[8px] font-bold tracking-widest uppercase text-grey/40 italic">
-                        No Report
-                      </span>
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const btn = e.currentTarget;
+                          btn.disabled = true;
+                          btn.innerText = 'GENERATING...';
+                          try {
+                            const res = await fetch('/api/admin/generate-report', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: sub.id })
+                            });
+                            if (res.ok) {
+                              const data = await res.json();
+                              window.location.reload();
+                            } else {
+                              alert('Generation failed. Try opening the result detail page.');
+                              btn.disabled = false;
+                              btn.innerText = 'GENERATE REPORT';
+                            }
+                          } catch (err) {
+                            alert('Error triggering generation.');
+                            btn.disabled = false;
+                            btn.innerText = 'GENERATE REPORT';
+                          }
+                        }}
+                        className="flex items-center gap-1 bg-navy text-white px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase hover:bg-gold transition-colors border border-navy"
+                      >
+                        <Loader2 className="w-2 h-2 animate-spin" />
+                        Generate Report
+                      </button>
                     )}
                     <div className="text-grey text-[9px] font-bold tracking-tighter uppercase">
                       {(() => {
