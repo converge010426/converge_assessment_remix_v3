@@ -13,7 +13,7 @@
       },
       "recruiter": {
         "name": "Converge 3: Recruiter All-in",
-        "price": "R 250",
+        "price": "R 150",
         "description": "MBTI, Comprehensive + Job-Specific Candidate Suitability Analysis for hiring."
       }
     },
@@ -28,5 +28,5 @@
     "branchCode": "470010",
     "reference": "CONVERGE — Your Name"
   },
-  "SYSTEM_VERSION": "1.1.0 (POLISHED)"
+  "SYSTEM_VERSION": "1.1.1 (OVERSIGHT)"
 }

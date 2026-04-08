@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { AssessmentResults, typeDescriptions } from '../logic.js';
 import { comprehensiveDescriptions } from '../comprehensiveDescriptions.js';
+import settings from '../../CONVERGE_SETTINGS.json';
+
+const SYSTEM_VERSION = settings.SYSTEM_VERSION;
 
 export async function generateMBTIReport(name: string, results: AssessmentResults): Promise<string> {
   const doc = new PDFDocument({

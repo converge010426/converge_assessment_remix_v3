@@ -1084,8 +1084,35 @@ function AdminResultDetail() {
   const reportPath = submission.report_url || submission.reportPath;
   const typeInfo = results?.mbti ? typeDescriptions[results.mbti] : null;
   const [isSending, setIsSending] = React.useState(false);
+  const [reviewChecked, setReviewChecked] = React.useState(false);
+  const [adminNotes, setAdminNotes] = React.useState(submission.admin_notes || '');
+  const [isSavingNotes, setIsSavingNotes] = React.useState(false);
+
+  const handleSaveNotes = async () => {
+    setIsSavingNotes(true);
+    try {
+      const res = await fetch(`/api/results/${submission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_notes: adminNotes })
+      });
+      if (res.ok) {
+        alert('Notes saved successfully.');
+      } else {
+        alert('Failed to save notes.');
+      }
+    } catch (err) {
+      alert('Error saving notes.');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
 
   const handleSendReport = async () => {
+    if (!reviewChecked) {
+      alert('Please complete the review checklist before sending.');
+      return;
+    }
     if (!confirm(`Send report to ${email}?`)) return;
     setIsSending(true);
     try {
@@ -1094,8 +1121,11 @@ function AdminResultDetail() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: submission.id, email, name, reportUrl: reportPath })
       });
-      if (res.ok) alert('Report sent successfully!');
-      else {
+      if (res.ok) {
+        alert('Report sent successfully!');
+        // Update local state to show it was sent
+        setSubmission((prev: any) => ({ ...prev, email_sent: true }));
+      } else {
         const data = await res.json();
         alert(`Failed to send report: ${data.error || 'Unknown error'}`);
       }
@@ -1114,15 +1144,21 @@ function AdminResultDetail() {
           Back to Dashboard
         </Link>
         <div className="text-right flex items-center gap-4">
+          {submission.email_sent && (
+            <span className="bg-green-600 text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Sent to Client
+            </span>
+          )}
           {reportPath && (
             <div className="flex gap-2">
               <button
                 onClick={handleSendReport}
-                disabled={isSending}
-                className="flex items-center gap-2 bg-navy text-white px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+                disabled={isSending || (submission.email_sent && !confirm('This report has already been sent. Send again?'))}
+                className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
+                  ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
               >
                 <Mail className="w-3 h-3" />
-                {isSending ? 'Sending...' : 'Send to Client'}
+                {isSending ? 'Sending...' : 'Approve & Send'}
               </button>
               <a 
                 href={reportPath}
@@ -1135,6 +1171,49 @@ function AdminResultDetail() {
             </div>
           )}
           <span className="bg-navy text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase">Internal Report</span>
+        </div>
+      </div>
+
+      {/* Review Checklist & Notes */}
+      <div className="mb-12 grid md:grid-cols-2 gap-8 bg-gold/5 p-8 border border-gold/20">
+        <div>
+          <h4 className="font-sans font-bold text-[10px] tracking-[3px] uppercase text-navy mb-4">Oversight Checklist</h4>
+          <div className="space-y-3">
+            {[
+              'Verify MBTI type matches cognitive markers',
+              'Check for blatant mis-prints or formatting errors',
+              'Ensure Suitability Indicators align with role context',
+              'Confirm candidate name and details are correct'
+            ].map((item, i) => (
+              <label key={i} className="flex items-center gap-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 accent-gold"
+                  onChange={(e) => {
+                    const allChecked = Array.from(document.querySelectorAll('input[type="checkbox"].accent-gold')).every((el: any) => el.checked);
+                    setReviewChecked(allChecked);
+                  }}
+                />
+                <span className="text-xs text-navy font-medium group-hover:text-gold transition-colors">{item}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h4 className="font-sans font-bold text-[10px] tracking-[3px] uppercase text-navy mb-4">Internal Admin Notes</h4>
+          <textarea 
+            value={adminNotes}
+            onChange={(e) => setAdminNotes(e.target.value)}
+            placeholder="Add internal observations or review notes here..."
+            className="w-full h-24 p-4 text-xs bg-white border border-gold/20 focus:border-gold outline-none font-sans font-medium resize-none"
+          />
+          <button 
+            onClick={handleSaveNotes}
+            disabled={isSavingNotes}
+            className="mt-2 text-[8px] font-bold tracking-[2px] uppercase text-gold hover:text-navy transition-colors flex items-center gap-1"
+          >
+            {isSavingNotes ? 'Saving...' : 'Save Internal Notes'}
+          </button>
         </div>
       </div>
 

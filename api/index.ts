@@ -336,12 +336,14 @@ app.post("/api/admin/send-report", async (req, res) => {
 
     const emailResult = await sendEmail(
       email,
-      `Your Converge Assessment Report: ${name}`,
-      `Dear ${name},\n\nPlease find your assessment report attached.\n\nBest regards,\nConverge Team`,
+      `Your CONVERGE™ Integrated Psychological Protocol: ${name}`,
+      `Dear ${name},\n\nThank you for your patience while I personally reviewed your assessment results.\n\nI have completed the final triangulation of your MBTI, Big Five, and Emotional Intelligence markers. Your integrated psychological protocol is now verified and attached to this email as a PDF.\n\nThis report provides a deep architectural view of your cognitive preferences and professional suitability. I trust you will find these insights valuable for your continued growth and career strategy.\n\nShould you have any specific questions regarding the findings, please feel free to reach out.\n\nBest regards,\n\nThomas Knoesen\nCONVERGE™ | Psychological Architecture`,
       [{ filename: `Converge_Report_${name.replace(/\s+/g, '_')}.pdf`, path: reportPath }]
     );
 
     if (emailResult.success) {
+      const supabase = getSupabase(true);
+      await supabase.from('submissions').update({ email_sent: true }).eq('id', id);
       res.json({ status: "ok" });
     } else {
       res.status(500).json({ error: "Failed to send email", details: emailResult.error });
@@ -395,6 +397,35 @@ app.get("/api/results", async (req, res) => {
   } catch (error: any) {
     logToFile(`Error fetching results: ${error.message}`);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch("/api/results/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  logToFile(`[API] Attempting to update submission ${id} with: ${JSON.stringify(updates)}`);
+  try {
+    const supabase = getSupabase(true);
+    const { data, error } = await supabase
+      .from('submissions')
+      .update(updates)
+      .eq('id', Number(id))
+      .select();
+
+    if (error) {
+      logToFile(`[API] Supabase Update Error: ${error.message}`);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    
+    logToFile(`[API] Successfully updated submission ${id}`);
+    res.json(data[0]);
+  } catch (error: any) {
+    logToFile(`[API] Error updating submission: ${error.message}`);
+    res.status(500).json({ error: 'Failed to update submission', details: error.message });
   }
 });
 
