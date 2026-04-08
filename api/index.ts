@@ -1,5 +1,5 @@
-// VERSION: 7.6 (DYNAMIC IMPORTS & VERCEL OPTIMIZED)
-// SYNC_ID: SYNC_20260408_1040
+// VERSION: 7.7 (ON-DEMAND REGEN & VERCEL OPTIMIZED)
+// SYNC_ID: SYNC_20260408_1115
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -598,13 +598,67 @@ app.delete("/api/results/:id", async (req, res) => {
   }
 });
 
-app.get("/api/reports/:filename", (req, res) => {
+app.get("/api/reports/:filename", async (req, res) => {
+  const { filename } = req.params;
   const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
-  const filePath = path.join(reportsDir, req.params.filename);
+  const filePath = path.join(reportsDir, filename);
+  
   if (fs.existsSync(filePath)) {
-    res.download(filePath);
-  } else {
-    res.status(404).send('Report not found');
+    return res.download(filePath);
+  }
+
+  // If file is missing, try to re-generate it on the fly
+  logToFile(`[API] Report ${filename} missing from disk. Attempting on-demand regeneration...`);
+  try {
+    const supabase = getSupabase(true);
+    // Search for submission that has this filename in its report_url
+    const { data: sub, error: subError } = await supabase
+      .from('submissions')
+      .select('*')
+      .ilike('report_url', `%${filename}%`)
+      .single();
+
+    if (subError || !sub) {
+      logToFile(`[API] Could not find submission for missing report ${filename}`);
+      return res.status(404).send('Report not found and could not be re-generated.');
+    }
+
+    logToFile(`[API] Found submission ${sub.id} for missing report. Re-generating...`);
+    const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
+    const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
+    const product = sub.product;
+    const name = sub.name;
+
+    let reportPath;
+    if (product === 'comprehensive' || product === 'recruiter') {
+      const jobData = {
+        jobTitle: sub.job_title,
+        jobEnvironment: sub.job_environment,
+        jobChallenge: sub.job_challenge,
+        jobDescription: sub.job_description
+      };
+      reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
+    } else {
+      reportPath = await generateMBTIReport(name, results);
+    }
+
+    // The filename might have changed (timestamp), so we should update the DB if it's different
+    const newFilename = path.basename(reportPath);
+    const newReportUrl = `/api/reports/${newFilename}`;
+    
+    if (newFilename !== filename) {
+      logToFile(`[API] Filename changed during regen: ${filename} -> ${newFilename}. Updating DB.`);
+      await supabase.from('submissions').update({ report_url: newReportUrl }).eq('id', sub.id);
+    }
+
+    if (fs.existsSync(reportPath)) {
+      return res.download(reportPath);
+    } else {
+      throw new Error("Report file was not created after generation attempt.");
+    }
+  } catch (err: any) {
+    logToFile(`[API] On-demand regeneration failed for ${filename}: ${err.message}`);
+    res.status(500).send(`Error re-generating report: ${err.message}`);
   }
 });
 
