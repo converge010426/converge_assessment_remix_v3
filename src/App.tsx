@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { questions, Question } from './questions';
-import { calculateResults, typeDescriptions, AssessmentResults } from './logic';
+import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
 import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2 } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
@@ -804,7 +804,17 @@ function AdminDashboard() {
       })
       .then(data => {
         console.log('[Dashboard] Data received:', Array.isArray(data) ? data.length : 'not an array');
-        setSubmissions(Array.isArray(data) ? data : []);
+        const parsedData = Array.isArray(data) ? data.map((sub: any) => {
+          if (sub.results && typeof sub.results === 'string') {
+            try {
+              sub.results = JSON.parse(sub.results);
+            } catch (e) {
+              console.error('Failed to parse results in dashboard:', e);
+            }
+          }
+          return sub;
+        }) : [];
+        setSubmissions(parsedData);
         setLoading(false);
       })
       .catch(err => {
@@ -998,17 +1008,22 @@ function AdminDashboard() {
                   <div className="text-[8px] font-bold tracking-widest uppercase text-gold mb-1">
                     {sub.product === 'recruiter' ? 'Converge 3' : sub.product === 'comprehensive' ? 'Converge 2' : 'Converge 1'}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {(sub.reportPath || sub.report_url) && (
+                  <div className="flex items-center gap-3 mt-2">
+                    {(sub.reportPath || sub.report_url) ? (
                       <a 
                         href={sub.reportPath || sub.report_url} 
-                        download 
+                        target="_blank"
+                        rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="hover:scale-110 transition-transform"
-                        title="Download Report"
+                        className="flex items-center gap-1 bg-gold/10 text-gold px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase hover:bg-gold hover:text-white transition-colors border border-gold/20"
                       >
-                        <FileText className="w-3 h-3 text-gold" />
+                        <FileText className="w-2 h-2" />
+                        Preview Report
                       </a>
+                    ) : (
+                      <span className="text-[8px] font-bold tracking-widest uppercase text-grey/40 italic">
+                        No Report
+                      </span>
                     )}
                     <div className="text-grey text-[9px] font-bold tracking-tighter uppercase">
                       {(() => {
@@ -1067,15 +1082,22 @@ function AdminResultDetail() {
       .then(data => {
         const found = data.find((s: any) => s.id.toString() === id);
         if (found) {
-          if (found.results && typeof found.results === 'string') {
-            try {
-              found.results = JSON.parse(found.results);
-            } catch (e) {
-              console.error('Failed to parse results JSON:', e);
-              found.results = { mbti: found.mbti || 'Unknown' };
+          // Robust parsing
+          if (found.results) {
+            if (typeof found.results === 'string') {
+              try {
+                found.results = JSON.parse(found.results);
+              } catch (e) {
+                console.error('Failed to parse results JSON:', e);
+                found.results = { mbti: found.mbti || 'Unknown' };
+              }
             }
+          } else {
+            found.results = { mbti: found.mbti || 'Unknown' };
           }
-          if (!found.results) {
+          
+          // Ensure results is an object
+          if (typeof found.results !== 'object') {
             found.results = { mbti: found.mbti || 'Unknown' };
           }
         }
@@ -1093,7 +1115,8 @@ function AdminResultDetail() {
   const { results, name, email } = submission;
   const submittedAt = submission.submitted_at || submission.submittedAt;
   const reportPath = submission.report_url || submission.reportPath;
-  const typeInfo = results?.mbti ? typeDescriptions[results.mbti] : null;
+  const typeInfo = results?.mbti ? typeDescriptions[results.mbti as MBTIType] : null;
+
   const [isSending, setIsSending] = React.useState(false);
   const [reviewChecked, setReviewChecked] = React.useState(false);
   const [checklist, setChecklist] = React.useState<Record<number, boolean>>({});
@@ -1111,7 +1134,6 @@ function AdminResultDetail() {
 
   const handleGenerateReport = React.useCallback(async () => {
     if (!submission || submission.report_url || isGenerating) return;
-    
     setIsGenerating(true);
     try {
       const res = await fetch('/api/admin/generate-report', {
@@ -1122,8 +1144,6 @@ function AdminResultDetail() {
       const data = await res.json();
       if (res.ok) {
         setSubmission((prev: any) => ({ ...prev, report_url: data.reportUrl }));
-      } else {
-        console.error('Auto-generation failed:', data.error);
       }
     } catch (err) {
       console.error('Error in auto-generation:', err);
@@ -1146,11 +1166,7 @@ function AdminResultDetail() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ admin_notes: adminNotes })
       });
-      if (res.ok) {
-        alert('Notes saved successfully.');
-      } else {
-        alert('Failed to save notes.');
-      }
+      if (res.ok) alert('Notes saved successfully.');
     } catch (err) {
       alert('Error saving notes.');
     } finally {
@@ -1173,7 +1189,6 @@ function AdminResultDetail() {
       });
       if (res.ok) {
         alert('Report sent successfully!');
-        // Update local state to show it was sent
         setSubmission((prev: any) => ({ ...prev, email_sent: true }));
       } else {
         const data = await res.json();
@@ -1230,7 +1245,6 @@ function AdminResultDetail() {
         </div>
       </div>
 
-      {/* Review Checklist & Notes */}
       <div className="mb-12 grid md:grid-cols-2 gap-8 bg-gold/5 p-8 border border-gold/20">
         <div>
           <h4 className="font-sans font-bold text-[10px] tracking-[3px] uppercase text-navy mb-4">Oversight Checklist</h4>
