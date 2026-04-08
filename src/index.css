@@ -6,10 +6,12 @@
   --font-sans: "Montserrat", sans-serif;
 
   --color-navy: #1B2A4A;
-  --color-gold: #B8972A;
-  --color-gold-lt: #D4B86A;
-  --color-cream: #F5F1E8;
-  --color-warm: #EDE8DC;
+  --color-gold: #c5a059;
+  --color-gold-lt: #d4b47a;
+  --color-earth: #5d3a1a;
+  --color-biscuit: #e3d5b8;
+  --color-cream: #fdfcf8;
+  --color-warm: #f9f7f2;
   --color-grey: #4A4A4A;
   --color-dark: #1A1A1A;
 }

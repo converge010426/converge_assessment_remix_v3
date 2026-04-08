@@ -3,7 +3,7 @@
     "products": {
       "mbti": {
         "name": "Converge 1: MBTI Basic",
-        "price": "R 30",
+        "price": "R 50",
         "description": "Myers-Briggs type assessment based on Carl Jung 16 types theory."
       },
       "comprehensive": {
@@ -19,7 +19,7 @@
     },
     "currency": "ZAR",
     "disclaimer": "* All prices in South African Rand (ZAR). Affordable psychological architecture for everyone.",
-    "paymentNote": "* FEES ARE PAYABLE IN FULL WITH SUBMISSION of THE QUESTIONNAIRE. UK PRICES ON REQUEST."
+    "paymentNote": "* FEES ARE PAYABLE IN FULL WITH SUBMISSION OF THE QUESTIONNAIRE. UK PRICES ON REQUEST."
   },
   "BANKING_DETAILS": {
     "bank": "Capitec Bank",

@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import nodemailer from "nodemailer";
 import { generateMBTIReport, generateComprehensiveReport } from "../src/services/reportService.js";
+import { generateHeritageReport } from "../src/services/heritageService.js";
 import { getSupabase } from "../src/lib/supabase.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -461,6 +462,47 @@ app.delete("/api/results/:id", async (req, res) => {
       error: 'Failed to delete submission',
       details: error.message || error.details || String(error)
     });
+  }
+});
+
+app.post("/api/heritage/submit", async (req, res) => {
+  const { familyName, subjectName, commissionerName, theme, lineage, origin, motto, stories } = req.body;
+  logToFile(`[API] Heritage submission received for family: ${familyName}`);
+
+  try {
+    const reportPath = await generateHeritageReport({
+      familyName,
+      subjectName,
+      commissionerName,
+      theme,
+      lineage: lineage || [],
+      origin: origin || { meaning: '', history: '' },
+      motto: motto || { latin: '', english: '' },
+      stories: stories || []
+    });
+
+    const reportUrl = `/api/reports/${path.basename(reportPath)}`;
+    
+    // Attempt to save to Supabase if configured
+    try {
+      const supabase = getSupabase(true);
+      await supabase.from('heritage_submissions').insert([{
+        family_name: familyName,
+        subject_name: subjectName,
+        commissioner_name: commissionerName,
+        theme,
+        lineage_data: lineage,
+        stories_data: stories,
+        report_url: reportUrl
+      }]);
+    } catch (dbErr) {
+      logToFile(`[API] Supabase save failed (likely table not ready): ${dbErr}`);
+    }
+
+    res.json({ status: "ok", reportUrl });
+  } catch (error: any) {
+    logToFile(`[API] Heritage generation error: ${error.message}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
