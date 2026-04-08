@@ -126,8 +126,8 @@ app.get("/api/health", (req, res) => {
   
   res.json({ 
     status: "ok", 
-    version: "7.4 (VERCEL OPTIMIZED)",
-    syncId: "SYNC_20260408_0740",
+    version: "7.5 (AUTO-GEN & PREVIEW)",
+    syncId: "SYNC_20260408_0820",
     environment: process.env.VERCEL ? "vercel" : "local",
     timestamp: new Date().toISOString(),
     env: {
@@ -310,59 +310,95 @@ ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/result/${sub
   }
 });
 
+app.post("/api/admin/generate-report", async (req, res) => {
+  const { id } = req.body;
+  logToFile(`[API] Admin requesting to generate report for ID ${id}`);
+  if (!id) return res.status(400).json({ error: "ID required" });
+  
+  try {
+    const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
+    const supabase = getSupabase(true);
+    const { data: sub, error: subError } = await supabase.from('submissions').select('*').eq('id', id).single();
+    
+    if (subError || !sub) {
+      logToFile(`[API] ERROR: Submission ${id} not found for generation`);
+      return res.status(404).json({ error: "Submission not found" });
+    }
+    
+    const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
+    const product = sub.product;
+    const name = sub.name;
+    
+    let reportPath;
+    if (product === 'comprehensive' || product === 'recruiter') {
+      const jobData = {
+        jobTitle: sub.job_title,
+        jobEnvironment: sub.job_environment,
+        jobChallenge: sub.job_challenge,
+        jobDescription: sub.job_description
+      };
+      reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
+    } else {
+      reportPath = await generateMBTIReport(name, results);
+    }
+    
+    const reportUrl = `/api/reports/${path.basename(reportPath)}`;
+    await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', id);
+    
+    logToFile(`[API] Report generated successfully for ID ${id}: ${reportUrl}`);
+    res.json({ status: "ok", reportUrl });
+  } catch (err: any) {
+    logToFile(`[API] ERROR generating report: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/admin/send-report", async (req, res) => {
-  const { id, email, name, reportUrl } = req.body;
+  const { id, email, name, reportUrl: providedUrl } = req.body;
   logToFile(`[API] Admin requesting to send report for ID ${id} to ${email}`);
 
-  if (!id || !email || !reportUrl) {
-    return res.status(400).json({ error: "Missing required fields" });
+  if (!id || !email) {
+    return res.status(400).json({ error: "Missing required fields (id, email)" });
   }
 
   try {
     const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
     const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
-    const fileName = path.basename(reportUrl);
-    let reportPath = path.join(reportsDir, fileName);
+    
+    let reportPath = "";
+    let finalReportUrl = providedUrl;
 
-    logToFile(`[API] Checking for report file at ${reportPath}...`);
-    if (!fs.existsSync(reportPath)) {
-      logToFile(`[API] Report file NOT found at ${reportPath}. Attempting to regenerate...`);
-      
-      // Fetch submission data to regenerate
+    // If no URL provided or file doesn't exist, we MUST regenerate
+    const needsRegen = !providedUrl || !fs.existsSync(path.join(reportsDir, path.basename(providedUrl)));
+
+    if (needsRegen) {
+      logToFile(`[API] Report needs regeneration for ID ${id}...`);
       const supabase = getSupabase(true);
       const { data: sub, error: subError } = await supabase.from('submissions').select('*').eq('id', id).single();
       
       if (subError || !sub) {
-        logToFile(`[API] ERROR: Could not find submission ${id} to regenerate report: ${subError?.message}`);
         return res.status(404).json({ error: "Submission not found for regeneration" });
       }
 
-      // Regenerate
-      try {
-        const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
-        const product = sub.product;
-        const name = sub.name;
+      const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
+      const product = sub.product;
+      const candidateName = sub.name;
 
-        if (product === 'comprehensive' || product === 'recruiter') {
-          const jobData = {
-            jobTitle: sub.job_title,
-            jobEnvironment: sub.job_environment,
-            jobChallenge: sub.job_challenge,
-            jobDescription: sub.job_description
-          };
-          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
-        } else {
-          reportPath = await generateMBTIReport(name, results);
-        }
-        logToFile(`[API] Report successfully regenerated at: ${reportPath}`);
-        
-        // Update report_url in case filename changed (though it shouldn't if we use the same logic)
-        const newReportUrl = `/api/reports/${path.basename(reportPath)}`;
-        await supabase.from('submissions').update({ report_url: newReportUrl }).eq('id', id);
-      } catch (regenErr: any) {
-        logToFile(`[API] ERROR regenerating report: ${regenErr.message}`);
-        return res.status(500).json({ error: "Failed to regenerate missing report" });
+      if (product === 'comprehensive' || product === 'recruiter') {
+        const jobData = {
+          jobTitle: sub.job_title,
+          jobEnvironment: sub.job_environment,
+          jobChallenge: sub.job_challenge,
+          jobDescription: sub.job_description
+        };
+        reportPath = await generateComprehensiveReport(candidateName, results, product === 'recruiter', jobData);
+      } else {
+        reportPath = await generateMBTIReport(candidateName, results);
       }
+      finalReportUrl = `/api/reports/${path.basename(reportPath)}`;
+      await supabase.from('submissions').update({ report_url: finalReportUrl }).eq('id', id);
+    } else {
+      reportPath = path.join(reportsDir, path.basename(providedUrl));
     }
 
     const emailResult = await sendEmail(

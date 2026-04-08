@@ -853,8 +853,8 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 7.4 (VERCEL OPTIMIZED)</p>
-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260408_0740</p>
+          <p className="font-bold text-gold mb-2">VERSION: 7.5 (AUTO-GEN & PREVIEW)</p>
+          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260408_0820</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
@@ -1093,6 +1093,37 @@ function AdminResultDetail() {
   const [adminNotes, setAdminNotes] = React.useState(submission.admin_notes || '');
   const [isSavingNotes, setIsSavingNotes] = React.useState(false);
 
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
+  const handleGenerateReport = React.useCallback(async () => {
+    if (!submission || submission.report_url || isGenerating) return;
+    
+    setIsGenerating(true);
+    try {
+      const res = await fetch('/api/admin/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: submission.id })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSubmission((prev: any) => ({ ...prev, report_url: data.reportUrl }));
+      } else {
+        console.error('Auto-generation failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Error in auto-generation:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [submission, isGenerating]);
+
+  React.useEffect(() => {
+    if (submission && !submission.report_url && !isGenerating) {
+      handleGenerateReport();
+    }
+  }, [submission, isGenerating, handleGenerateReport]);
+
   const handleSaveNotes = async () => {
     setIsSavingNotes(true);
     try {
@@ -1167,21 +1198,18 @@ function AdminResultDetail() {
             {reportPath ? (
               <a 
                 href={reportPath}
-                download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-gold text-white px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase hover:bg-gold/90 transition-colors"
               >
-                <Download className="w-3 h-3" />
-                Download
+                <FileText className="w-3 h-3" />
+                Preview Report
               </a>
             ) : (
-              <button
-                onClick={handleSendReport}
-                className="flex items-center gap-2 bg-gold/20 text-gold px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase cursor-help"
-                title="Report will be generated when you click Approve & Send"
-              >
-                <FileText className="w-3 h-3" />
-                Pending Generation
-              </button>
+              <div className="flex items-center gap-2 bg-gold/10 text-gold px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Generating PDF...
+              </div>
             )}
           </div>
           <span className="bg-navy text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase">Internal Report</span>
@@ -1356,11 +1384,11 @@ function AdminResultDetail() {
                 </thead>
                 <tbody className="font-sans text-sm">
                   {[
-                    { trait: 'Openness', score: results.bigFive.openness, desc: 'Intellectual curiosity and systems thinking' },
-                    { trait: 'Conscientiousness', score: results.bigFive.conscientiousness, desc: 'Drive, self-discipline, and execution focus' },
-                    { trait: 'Extraversion', score: results.bigFive.extraversion, desc: 'Social energy and outward orientation' },
-                    { trait: 'Agreeableness', score: results.bigFive.agreeableness, desc: 'Focus on harmony vs independent principle' },
-                    { trait: 'Emotional Stability', score: results.bigFive.emotionalStability, desc: 'Internal sensitivity and stress resilience' },
+                    { trait: 'Openness', score: results?.bigFive?.openness || 0, desc: 'Intellectual curiosity and systems thinking' },
+                    { trait: 'Conscientiousness', score: results?.bigFive?.conscientiousness || 0, desc: 'Drive, self-discipline, and execution focus' },
+                    { trait: 'Extraversion', score: results?.bigFive?.extraversion || 0, desc: 'Social energy and outward orientation' },
+                    { trait: 'Agreeableness', score: results?.bigFive?.agreeableness || 0, desc: 'Focus on harmony vs independent principle' },
+                    { trait: 'Emotional Stability', score: results?.bigFive?.emotionalStability || 0, desc: 'Internal sensitivity and stress resilience' },
                   ].map((row, i) => (
                     <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-warm'}>
                       <td className="p-4 font-bold text-navy antialiased">{row.trait}</td>
@@ -1381,11 +1409,11 @@ function AdminResultDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {results?.ei ? (
               [
-                { icon: <ShieldCheck />, label: 'Self-Awareness', score: results.ei.selfAwareness },
-                { icon: <Zap />, label: 'Self-Regulation', score: results.ei.selfRegulation },
-                { icon: <Brain />, label: 'Motivation', score: results.ei.motivation },
-                { icon: <Info />, label: 'Empathy', score: results.ei.empathy },
-                { icon: <FileText />, label: 'Social Skills', score: results.ei.socialSkills },
+                { icon: <ShieldCheck />, label: 'Self-Awareness', score: results?.ei?.selfAwareness || 0 },
+                { icon: <Zap />, label: 'Self-Regulation', score: results?.ei?.selfRegulation || 0 },
+                { icon: <Brain />, label: 'Motivation', score: results?.ei?.motivation || 0 },
+                { icon: <Info />, label: 'Empathy', score: results?.ei?.empathy || 0 },
+                { icon: <FileText />, label: 'Social Skills', score: results?.ei?.socialSkills || 0 },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4 bg-warm p-6 border-l-4 border-navy">
                   <div className="text-gold">{item.icon}</div>
