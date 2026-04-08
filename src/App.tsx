@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
-import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
 const Letterhead = () => (
@@ -619,30 +619,49 @@ export default function App() {
                   {PRICING.paymentNote}
                 </p>
 
-                {/* Banking Details Table */}
+                {/* Payment Options Section */}
                 <div className="px-4">
-                  <div className="space-y-4 max-w-md mx-auto">
-                    <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Banking Details ({PRICING.currency})</h4>
-                    <table className="w-full text-xs">
-                      <tbody>
-                        <tr>
-                          <td className="py-1.5 text-grey font-bold uppercase tracking-tighter w-32">Bank</td>
-                          <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.bank}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Account Name</td>
-                          <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.accountHolder}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Account Number</td>
-                          <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.accountNumber}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Branch Code</td>
-                          <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.branchCode} (Universal)</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {/* Banking Details Table */}
+                    <div className="space-y-4">
+                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">EFT Banking Details ({PRICING.currency})</h4>
+                      <table className="w-full text-xs">
+                        <tbody>
+                          <tr>
+                            <td className="py-1.5 text-grey font-bold uppercase tracking-tighter w-32">Bank</td>
+                            <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.bank}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Account Name</td>
+                            <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.accountHolder}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Account Number</td>
+                            <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.accountNumber}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 text-grey font-bold uppercase tracking-tighter">Branch Code</td>
+                            <td className="py-1.5 text-navy font-bold">{BANKING_DETAILS.branchCode} (Universal)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* OZOW Placeholder */}
+                    <div className="space-y-4">
+                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (OZOW)</h4>
+                      <div className="h-full flex flex-col items-center justify-center border border-dashed border-gold/30 p-6 bg-gold/5 rounded-sm">
+                        <div className="text-gold mb-2">
+                          <CreditCard className="w-8 h-8 opacity-50" />
+                        </div>
+                        <p className="text-[10px] text-grey font-bold uppercase tracking-widest text-center">
+                          OZOW Integration Pending
+                        </p>
+                        <p className="text-[8px] text-grey/60 uppercase tracking-tighter mt-1 text-center">
+                          Instant EFT coming soon
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -693,7 +712,11 @@ function AdminLogin() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const adminPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || 'Kw@draad3';
+    const adminPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD;
+    if (!adminPassword) {
+      setError('System Error: Admin password not configured in environment.');
+      return;
+    }
     if (password === adminPassword) {
       localStorage.setItem('admin_auth', 'true');
       navigate('/admin');
