@@ -1,5 +1,5 @@
-// VERSION: 7.4 (DYNAMIC IMPORTS & VERCEL OPTIMIZED)
-// SYNC_ID: SYNC_20260408_0740
+// VERSION: 7.6 (DYNAMIC IMPORTS & VERCEL OPTIMIZED)
+// SYNC_ID: SYNC_20260408_1040
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -9,7 +9,19 @@ import { getSupabase } from "../src/lib/supabase.js";
 
 // Dynamic imports for heavy services to prevent timeout on cold start
 const getReportServices = async () => {
-  return await import("../src/services/reportService.js");
+  try {
+    // Try relative path first
+    return await import("../src/services/reportService.js");
+  } catch (err: any) {
+    logToFile(`[API] Primary import failed, trying absolute path...`);
+    try {
+      const absolutePath = path.join(process.cwd(), "src", "services", "reportService.js");
+      return await import(absolutePath);
+    } catch (err2: any) {
+      logToFile(`[API] Absolute import failed: ${err2.message}`);
+      throw new Error(`Failed to load report services: ${err2.message}`);
+    }
+  }
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -98,7 +110,7 @@ app.get("/api/admin/diagnostics", (req, res) => {
   );
 
   const diagnostics = {
-    VERSION: "6.7",
+    VERSION: "7.6",
     VERCEL: !!process.env.VERCEL,
     VERCEL_URL: process.env.VERCEL_URL || 'NOT SET',
     SUPABASE_URL: !!process.env.SUPABASE_URL,
@@ -368,9 +380,17 @@ app.post("/api/admin/generate-report", async (req, res) => {
       return res.status(404).json({ error: "Submission not found" });
     }
     
+    if (!sub.results) {
+      throw new Error("Assessment results are missing for this submission.");
+    }
+    
     const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
     const product = sub.product;
     const name = sub.name;
+    
+    if (!results.mbti) {
+      throw new Error("MBTI type is missing from results.");
+    }
     
     let reportPath;
     if (product === 'comprehensive' || product === 'recruiter') {
@@ -391,8 +411,12 @@ app.post("/api/admin/generate-report", async (req, res) => {
     logToFile(`[API] Report generated successfully for ID ${id}: ${reportUrl}`);
     res.json({ status: "ok", reportUrl });
   } catch (err: any) {
-    logToFile(`[API] ERROR generating report: ${err.message}`);
-    res.status(500).json({ error: err.message });
+    logToFile(`[API] ERROR generating report for ID ${id}: ${err.message}`);
+    res.status(500).json({ 
+      error: "GENERATION_FAILED", 
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 

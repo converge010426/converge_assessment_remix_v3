@@ -15,12 +15,15 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   });
 
   const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
+  console.log(`[ReportService] Generating MBTI report for ${name}. Reports dir: ${reportsDir}`);
   try {
     if (!fs.existsSync(reportsDir)) {
+      console.log(`[ReportService] Creating reports directory: ${reportsDir}`);
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-  } catch (err) {
-    console.error(`[ReportService] Failed to create reports directory at ${reportsDir}:`, err);
+  } catch (err: any) {
+    console.error(`[ReportService] Failed to create reports directory at ${reportsDir}:`, err.message);
+    throw new Error(`FileSystem Error: ${err.message}`);
   }
 
   const sanitizedName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -371,12 +374,15 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   });
 
   const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
+  console.log(`[ReportService] Generating Comprehensive report for ${name}. Reports dir: ${reportsDir}`);
   try {
     if (!fs.existsSync(reportsDir)) {
+      console.log(`[ReportService] Creating reports directory: ${reportsDir}`);
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-  } catch (err) {
-    console.error(`[ReportService] Failed to create reports directory at ${reportsDir}:`, err);
+  } catch (err: any) {
+    console.error(`[ReportService] Failed to create reports directory at ${reportsDir}:`, err.message);
+    throw new Error(`FileSystem Error: ${err.message}`);
   }
 
   const sanitizedName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();

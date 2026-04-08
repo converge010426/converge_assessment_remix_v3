@@ -1038,7 +1038,8 @@ function AdminDashboard() {
                               const data = await res.json();
                               window.location.reload();
                             } else {
-                              alert('Generation failed. Try opening the result detail page.');
+                              const errData = await res.json();
+                              alert(`Generation failed: ${errData.message || errData.error || 'Unknown error'}\n\nTry opening the result detail page to see if it generates there.`);
                               btn.disabled = false;
                               btn.innerText = 'GENERATE REPORT';
                             }
