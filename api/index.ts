@@ -258,53 +258,37 @@ app.post("/api/submit", async (req, res) => {
     const submissionId = finalData[0].id;
     logToFile(`[API] INSERT SUCCESS: ID ${submissionId}`);
 
-    // Report generation and notification (Awaited to ensure completion on serverless)
+    // 4. Send fast notification to admin (NO ATTACHMENT)
     try {
-      logToFile(`[API] Starting report generation for ID ${submissionId}...`);
-      let reportPath;
-      const jobData = { jobTitle, jobEnvironment, jobChallenge, jobDescription };
-      if (product === 'comprehensive' || product === 'recruiter') {
-        reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
-      } else {
-        reportPath = await generateMBTIReport(name, results);
-      }
-      logToFile(`[API] Report generated at: ${reportPath}`);
-      
-      const reportUrl = `/api/reports/${path.basename(reportPath)}`;
-      const { error: updateError } = await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
-      
-      if (updateError) {
-        logToFile(`[API] ERROR updating report_url: ${updateError.message}`);
-      } else {
-        logToFile(`[API] report_url updated successfully: ${reportUrl}`);
-      }
-
-      // Send internal notification to admin
+      logToFile(`[API] Sending fast notification for ID ${submissionId}...`);
       const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
-      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "tomknsn@gmail.com";
-      
-      logToFile(`[API] Sending admin notification FROM: ${fromEmail} TO: ${adminEmail}...`);
       
       const emailResult = await sendEmail(
         adminEmail,
-        `NEW ASSESSMENT: ${name}`,
-        `A new assessment has been submitted.\n\n--- CANDIDATE DETAILS ---\nName: ${name}\nEmail: ${email}\nProduct: ${product}\nID: ${submissionId}\n\n--- STATUS ---\nThe report has been generated and is stored on the server.\nIt will NOT be sent to the candidate automatically.\n\n--- ACTION REQUIRED ---\nPlease verify payment and then send the report manually via the Admin Dashboard:\n${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/admin/result/${submissionId}\n\nInternal Report Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}${reportUrl}`,
-        [{ filename: path.basename(reportPath), path: reportPath }]
+        `NEW ASSESSMENT: ${name} (${results.mbti})`,
+        `A new assessment has been submitted.
+        
+Candidate: ${name}
+Email: ${email}
+Type: ${results.mbti}
+Product: ${product}
+
+Please verify payment and then send the report manually via the Admin Dashboard:
+${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/result/${submissionId}` : `Check Admin Dashboard for ID ${submissionId}`}
+
+(Note: PDF generation is now handled on-demand in the dashboard to ensure fast submissions and prevent timeouts.)`
       );
       
       if (emailResult.success) {
-        logToFile(`[API] Admin notification sent successfully: ${emailResult.messageId}`);
+        logToFile(`[API] Admin notification sent successfully.`);
       } else {
-        logToFile(`[API] ERROR: Admin notification failed: ${emailResult.error}`);
+        logToFile(`[API] Admin notification failed: ${emailResult.error}`);
       }
-      
-      logToFile(`[API] Process completed for ID ${submissionId}`);
-    } catch (reportErr: any) {
-      logToFile(`[API] Report/notification failed for ID ${submissionId}: ${reportErr.message}`);
-      console.error(reportErr);
+    } catch (emailErr: any) {
+      logToFile(`[API] Admin notification error: ${emailErr.message}`);
     }
 
-    res.json({ status: "ok", id: submissionId });
+    return res.json({ status: "ok", id: submissionId });
   } catch (error: any) {
     logToFile(`[API] CRITICAL ERROR: ${error.message}`);
     if (!res.headersSent) {

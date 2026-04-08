@@ -1154,17 +1154,17 @@ function AdminResultDetail() {
               <CheckCircle2 className="w-3 h-3" /> Sent to Client
             </span>
           )}
-          {reportPath && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSendReport}
-                disabled={isSending || (submission.email_sent && !confirm('This report has already been sent. Send again?'))}
-                className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
-                  ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
-              >
-                <Mail className="w-3 h-3" />
-                {isSending ? 'Sending...' : 'Approve & Send'}
-              </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSendReport}
+              disabled={isSending}
+              className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
+                ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
+            >
+              <Mail className="w-3 h-3" />
+              {isSending ? 'Sending...' : 'Approve & Send'}
+            </button>
+            {reportPath ? (
               <a 
                 href={reportPath}
                 download
@@ -1173,8 +1173,17 @@ function AdminResultDetail() {
                 <Download className="w-3 h-3" />
                 Download
               </a>
-            </div>
-          )}
+            ) : (
+              <button
+                onClick={handleSendReport}
+                className="flex items-center gap-2 bg-gold/20 text-gold px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase cursor-help"
+                title="Report will be generated when you click Approve & Send"
+              >
+                <FileText className="w-3 h-3" />
+                Pending Generation
+              </button>
+            )}
+          </div>
           <span className="bg-navy text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase">Internal Report</span>
         </div>
       </div>
