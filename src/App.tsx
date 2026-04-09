@@ -38,6 +38,37 @@ const Footer = () => (
   </footer>
 );
 
+const PayfastButton = ({ productKey }: { productKey: string }) => {
+  const merchantId = (import.meta as any).env.VITE_PAYFAST_MERCHANT_ID || '21424325';
+  const merchantKey = (import.meta as any).env.VITE_PAYFAST_MERCHANT_KEY || 'gclahuwgyvza';
+  const payfastUrl = (import.meta as any).env.VITE_PAYFAST_URL || 'https://www.payfast.co.za/eng/process';
+  
+  const product = PRICING.products[productKey as keyof typeof PRICING.products];
+  if (!product) return null;
+
+  // Extract numeric value from price string (e.g., "R 150" -> 150)
+  const amount = product.price.replace(/[^0-9]/g, '');
+  const submissionId = localStorage.getItem('last_submission_id') || 'CONVERGE';
+
+  return (
+    <form action={payfastUrl} method="post" className="w-full">
+      <input type="hidden" name="merchant_id" value={merchantId} />
+      <input type="hidden" name="merchant_key" value={merchantKey} />
+      <input type="hidden" name="amount" value={amount} />
+      <input type="hidden" name="item_name" value={product.name} />
+      <input type="hidden" name="m_payment_id" value={submissionId} />
+      
+      <button 
+        type="submit"
+        className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg group"
+      >
+        <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
+        Pay Now with Payfast
+      </button>
+    </form>
+  );
+};
+
 export default function App() {
   const navigate = useNavigate();
   const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
@@ -128,6 +159,7 @@ export default function App() {
         localStorage.setItem('submission_history', JSON.stringify(history.slice(0, 5)));
         
         if (data.id) localStorage.setItem('last_submission_id', data.id);
+        localStorage.setItem('last_product', selectedProduct);
         navigate('/thank-you');
       } else {
         let errorMessage = 'There was an error submitting your assessment. Please try again.';
@@ -570,7 +602,7 @@ export default function App() {
             </div>
             <h2 className="text-4xl text-navy font-bold mb-4 antialiased uppercase tracking-tight">Assessment Submitted</h2>
             <p className="text-xl text-dark font-semibold max-w-lg mb-8 antialiased">
-              Thank you, {userName}. Your assessment has been successfully received and is being processed.
+              Thank you, {userName || 'Candidate'}. Your assessment has been successfully received and is being processed.
             </p>
             
             <div className="bg-warm p-8 border-l-4 border-gold max-w-xl mb-12">
@@ -647,18 +679,19 @@ export default function App() {
                       </table>
                     </div>
 
-                    {/* OZOW Placeholder */}
+                    {/* Payfast Integration */}
                     <div className="space-y-4">
-                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (OZOW)</h4>
-                      <div className="h-full flex flex-col items-center justify-center border border-dashed border-gold/30 p-6 bg-gold/5 rounded-sm">
-                        <div className="text-gold mb-2">
-                          <CreditCard className="w-8 h-8 opacity-50" />
+                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Payfast)</h4>
+                      <div className="h-full flex flex-col items-center justify-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
+                        <div className="mb-6 text-center">
+                          <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">Secure Instant EFT & Card</p>
+                          <p className="text-[8px] text-grey uppercase tracking-tighter">Powered by Payfast South Africa</p>
                         </div>
-                        <p className="text-[10px] text-grey font-bold uppercase tracking-widest text-center">
-                          OZOW Integration Pending
-                        </p>
-                        <p className="text-[8px] text-grey/60 uppercase tracking-tighter mt-1 text-center">
-                          Instant EFT coming soon
+                        
+                        <PayfastButton productKey={localStorage.getItem('last_product') || 'mbti'} />
+                        
+                        <p className="text-[8px] text-grey/60 uppercase tracking-tighter mt-4 text-center">
+                          Your report will be processed upon payment verification
                         </p>
                       </div>
                     </div>
