@@ -173,7 +173,7 @@ app.post("/api/submit", async (req, res) => {
   }
 
   try {
-    const supabase = getSupabase();
+    const supabase = getSupabase(true);
     
     logToFile(`[API] Data sizes - Answers: ${JSON.stringify(answers).length}, Results: ${JSON.stringify(results).length}`);
 
@@ -567,7 +567,7 @@ app.delete("/api/results/:id", async (req, res) => {
   const { id } = req.params;
   logToFile(`Attempting to delete submission ${id}`);
   try {
-    const supabase = getSupabase();
+    const supabase = getSupabase(true);
     const { data, error } = await supabase
       .from('submissions')
       .delete()
