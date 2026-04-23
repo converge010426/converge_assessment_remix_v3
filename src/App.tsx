@@ -38,34 +38,17 @@ const Footer = () => (
   </footer>
 );
 
-const PayfastButton = ({ productKey }: { productKey: string }) => {
-  const merchantId = (import.meta as any).env.VITE_PAYFAST_MERCHANT_ID || '21424325';
-  const merchantKey = (import.meta as any).env.VITE_PAYFAST_MERCHANT_KEY || 'gclahuwgyvza';
-  const payfastUrl = (import.meta as any).env.VITE_PAYFAST_URL || 'https://www.payfast.co.za/eng/process';
+const YokoButton = () => {
+  const yokoUrl = 'https://pay.yoco.com/heritage-family-artifacts';
   
-  const product = PRICING.products[productKey as keyof typeof PRICING.products];
-  if (!product) return null;
-
-  // Extract numeric value from price string (e.g., "R 150" -> 150)
-  const amount = product.price.replace(/[^0-9]/g, '');
-  const submissionId = localStorage.getItem('last_submission_id') || 'CONVERGE';
-
   return (
-    <form action={payfastUrl} method="post" className="w-full">
-      <input type="hidden" name="merchant_id" value={merchantId} />
-      <input type="hidden" name="merchant_key" value={merchantKey} />
-      <input type="hidden" name="amount" value={amount} />
-      <input type="hidden" name="item_name" value={product.name} />
-      <input type="hidden" name="m_payment_id" value={submissionId} />
-      
-      <button 
-        type="submit"
-        className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg group"
-      >
-        <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
-        Pay Now with Payfast
-      </button>
-    </form>
+    <a 
+      href={yokoUrl}
+      className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg group text-center"
+    >
+      <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
+      Pay Now with Yoko
+    </a>
   );
 };
 
@@ -679,16 +662,16 @@ export default function App() {
                       </table>
                     </div>
 
-                    {/* Payfast Integration */}
+                    {/* Yoko Integration */}
                     <div className="space-y-4">
-                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Payfast)</h4>
+                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Yoko)</h4>
                       <div className="h-full flex flex-col items-center justify-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
                         <div className="mb-6 text-center">
                           <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">Secure Instant EFT & Card</p>
-                          <p className="text-[8px] text-grey uppercase tracking-tighter">Powered by Payfast South Africa</p>
+                          <p className="text-[8px] text-grey uppercase tracking-tighter">Powered by Yoko South Africa</p>
                         </div>
                         
-                        <PayfastButton productKey={localStorage.getItem('last_product') || 'mbti'} />
+                        <YokoButton />
                         
                         <p className="text-[8px] text-grey/60 uppercase tracking-tighter mt-4 text-center">
                           Your report will be processed upon payment verification
