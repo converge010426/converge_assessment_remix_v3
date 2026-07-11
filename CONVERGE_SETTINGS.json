@@ -3,17 +3,17 @@
     "products": {
       "mbti": {
         "name": "Converge 1: MBTI Basic",
-        "price": "R 50",
+        "price": "R 20",
         "description": "Myers-Briggs type assessment based on Carl Jung 16 types theory."
       },
       "comprehensive": {
         "name": "Converge 2: Comprehensive",
-        "price": "R 75",
+        "price": "R 30",
         "description": "Multi-dimensional report integrating MBTI, Big Five, and Emotional Intelligence."
       },
       "recruiter": {
         "name": "Converge 3: Recruiter All-in",
-        "price": "R 150",
+        "price": "R 50",
         "description": "MBTI, Comprehensive + Job-Specific Candidate Suitability Analysis for hiring."
       }
     },
