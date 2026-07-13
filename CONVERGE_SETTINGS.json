@@ -3,7 +3,7 @@
     "products": {
       "mbti": {
         "name": "Converge 1: MBTI Basic",
-        "price": "R 20",
+        "price": "R 0",
         "description": "Myers-Briggs type assessment based on Carl Jung 16 types theory."
       },
       "comprehensive": {
