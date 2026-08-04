@@ -940,7 +940,7 @@ function AdminDashboard() {
 
       <main className="space-y-4">
         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
-          <p className="font-bold text-gold mb-2">VERSION: 7.7 (ON-DEMAND REGEN & PREVIEW)</p>
+          <p<p className="font-bold text-gold mb-2">VERSION: {SYSTEM_VERSION}</p> </p>
           <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260408_1115</p>
           <p>DEBUG INFO:</p>
           <p>Current URL: {window.location.hostname}</p>
