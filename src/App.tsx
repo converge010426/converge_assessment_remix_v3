@@ -352,7 +352,7 @@ export default function App() {
                   <ul className="space-y-4 text-dark font-bold">
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">01</span>
-                      <p>There are 60 questions in total. It should take approximately 10-15 minutes to complete.</p>
+                      <p>60 easy multiple-choice questions — less than 10 minutes..</p>
                     </li>
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">02</span>
