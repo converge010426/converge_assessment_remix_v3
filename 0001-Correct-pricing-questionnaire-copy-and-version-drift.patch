@@ -1,0 +1,130 @@
+From f93e0b6c6743ca94bef3059f30826fd73ae8ee8e Mon Sep 17 00:00:00 2001
+From: Thomas Knoesen <tomknsn@gmail.com>
+Date: Tue, 4 Aug 2026 19:42:29 +0000
+Subject: [PATCH] Correct pricing, questionnaire copy, and version drift
+
+- Pricing: MBTI Basic R0->R30, Comprehensive R30->R50, Recruiter R50->R100
+- Instructions: '10-15 minutes' -> 'less than 10 minutes' (60 questions)
+- Add instinctive-answer instruction
+- Add 24-hour report delivery copy on thank-you page
+- Reconcile version string drift (7.5/7.6/7.7 -> 7.8) across api/index.ts, CONVERGE_SETTINGS.json, and admin dashboard
+
+No changes to questionnaire, scoring, MBTI/Big Five/EI methodology, report generation, product routing, or email delivery logic. Admin password fallback left untouched pending Vercel env var verification.
+---
+ CONVERGE_SETTINGS.json |  8 ++++----
+ api/index.ts           | 10 +++++-----
+ src/App.tsx            | 13 ++++++++++---
+ 3 files changed, 19 insertions(+), 12 deletions(-)
+
+diff --git a/CONVERGE_SETTINGS.json b/CONVERGE_SETTINGS.json
+index aaec36a..6805926 100644
+--- a/CONVERGE_SETTINGS.json
++++ b/CONVERGE_SETTINGS.json
+@@ -3,17 +3,17 @@
+     "products": {
+       "mbti": {
+         "name": "Converge 1: MBTI Basic",
+-        "price": "R 0",
++        "price": "R 30",
+         "description": "Myers-Briggs type assessment based on Carl Jung 16 types theory."
+       },
+       "comprehensive": {
+         "name": "Converge 2: Comprehensive",
+-        "price": "R 30",
++        "price": "R 50",
+         "description": "Multi-dimensional report integrating MBTI, Big Five, and Emotional Intelligence."
+       },
+       "recruiter": {
+         "name": "Converge 3: Recruiter All-in",
+-        "price": "R 50",
++        "price": "R 100",
+         "description": "MBTI, Comprehensive + Job-Specific Candidate Suitability Analysis for hiring."
+       }
+     },
+@@ -28,5 +28,5 @@
+     "branchCode": "470010",
+     "reference": "CONVERGE — Your Name"
+   },
+-  "SYSTEM_VERSION": "7.7 (ON-DEMAND REGEN)"
++  "SYSTEM_VERSION": "7.8 (PRICING & COPY CORRECTION)"
+ }
+diff --git a/api/index.ts b/api/index.ts
+index 21d7fbc..2193641 100644
+--- a/api/index.ts
++++ b/api/index.ts
+@@ -1,5 +1,5 @@
+-// VERSION: 7.7 (ON-DEMAND REGEN & VERCEL OPTIMIZED)
+-// SYNC_ID: SYNC_20260408_1115
++// VERSION: 7.8 (PRICING & COPY CORRECTION)
++// SYNC_ID: SYNC_20260804_0000
+ import express from "express";
+ import path from "path";
+ import { fileURLToPath } from "url";
+@@ -110,7 +110,7 @@ app.get("/api/admin/diagnostics", (req, res) => {
+   );
+ 
+   const diagnostics = {
+-    VERSION: "7.6",
++    VERSION: "7.8 (PRICING & COPY CORRECTION)",
+     VERCEL: !!process.env.VERCEL,
+     VERCEL_URL: process.env.VERCEL_URL || 'NOT SET',
+     SUPABASE_URL: !!process.env.SUPABASE_URL,
+@@ -138,8 +138,8 @@ app.get("/api/health", (req, res) => {
+   
+   res.json({ 
+     status: "ok", 
+-    version: "7.5 (AUTO-GEN & PREVIEW)",
+-    syncId: "SYNC_20260408_0820",
++    version: "7.8 (PRICING & COPY CORRECTION)",
++    syncId: "SYNC_20260804_0000",
+     environment: process.env.VERCEL ? "vercel" : "local",
+     timestamp: new Date().toISOString(),
+     env: {
+diff --git a/src/App.tsx b/src/App.tsx
+index 9478196..df15acc 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -352,7 +352,7 @@ export default function App() {
+                   <ul className="space-y-4 text-dark font-bold">
+                     <li className="flex gap-3">
+                       <span className="text-gold font-bold">01</span>
+-                      <p>There are 60 questions in total. It should take approximately 10-15 minutes to complete.</p>
++                      <p>60 easy multiple-choice questions — less than 10 minutes.</p>
+                     </li>
+                     <li className="flex gap-3">
+                       <span className="text-gold font-bold">02</span>
+@@ -362,6 +362,10 @@ export default function App() {
+                       <span className="text-gold font-bold">03</span>
+                       <p>Try to avoid 'Neutral' answers where possible to ensure a more precise profile.</p>
+                     </li>
++                    <li className="flex gap-3">
++                      <span className="text-gold font-bold">04</span>
++                      <p>Answer instinctively. Go with your first response — don't overthink or search for the "best" answer.</p>
++                    </li>
+                   </ul>
+                 </section>
+ 
+@@ -592,6 +596,9 @@ export default function App() {
+               <p className="text-navy font-bold italic leading-relaxed antialiased">
+                 "The results will be sent to your e-mail after verification that the assessment fee has been paid."
+               </p>
++              <p className="text-navy/70 font-bold text-sm mt-3 antialiased">
++                Your chosen report is delivered to your inbox within 24 hours of payment verification.
++              </p>
+               {localStorage.getItem('last_submission_id') && (
+                 <p className="text-[10px] text-navy/40 mt-4 uppercase tracking-widest">
+                   Submission ID: {localStorage.getItem('last_submission_id')}
+@@ -940,8 +947,8 @@ function AdminDashboard() {
+ 
+       <main className="space-y-4">
+         <div className="bg-navy/5 p-4 border border-navy/10 mb-6 rounded text-[10px] font-mono text-navy/60">
+-          <p className="font-bold text-gold mb-2">VERSION: 7.7 (ON-DEMAND REGEN & PREVIEW)</p>
+-          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260408_1115</p>
++          <p className="font-bold text-gold mb-2">VERSION: {SYSTEM_VERSION}</p>
++          <p className="text-[8px] opacity-30 mb-2">SYNC_ID: SYNC_20260804_0000</p>
+           <p>DEBUG INFO:</p>
+           <p>Current URL: {window.location.hostname}</p>
+           <div className={`p-2 mb-2 rounded font-bold ${window.location.hostname.includes('vercel.app') ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
+-- 
+2.43.0
+
