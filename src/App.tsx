@@ -362,6 +362,10 @@ export default function App() {
                       <span className="text-gold font-bold">03</span>
                       <p>Try to avoid 'Neutral' answers where possible to ensure a more precise profile.</p>
                     </li>
+                    <li className="flex gap-3">
+                      <span className="text-gold font-bold">04</span>
+                      <p>Answer instinctively. Go with your first response — don't overthink or search for the "best" answer.</p>
+                    </li>
                   </ul>
                 </section>
 
@@ -591,6 +595,9 @@ export default function App() {
             <div className="bg-warm p-8 border-l-4 border-gold max-w-xl mb-12">
               <p className="text-navy font-bold italic leading-relaxed antialiased">
                 "The results will be sent to your e-mail after verification that the assessment fee has been paid."
+              </p>
+              <p className="text-navy/70 font-bold text-sm mt-3 antialiased">
+                Your chosen report is delivered to your inbox within 24 hours of payment verification.
               </p>
               {localStorage.getItem('last_submission_id') && (
                 <p className="text-[10px] text-navy/40 mt-4 uppercase tracking-widest">
