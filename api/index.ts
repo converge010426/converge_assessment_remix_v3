@@ -158,7 +158,7 @@ app.post("/api/submit", async (req, res) => {
   const { name, email, answers, results, product, jobTitle, jobEnvironment, jobChallenge, jobDescription } = req.body;
   
   logToFile(`[API] SUBMIT START: ${name} (${email})`);
-  
+  logToFile(`[API] SUBMIT CONTEXT: UserAgent="${req.headers['user-agent'] || 'unknown'}" AnswersCount=${answers ? Object.keys(answers).length : 0} Product=${product || 'unset'}`);
   // Environment check
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
     logToFile("[API] ERROR: Missing Supabase environment variables in Vercel.");
