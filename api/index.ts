@@ -260,17 +260,18 @@ app.post("/api/submit", async (req, res) => {
       }
     }
 
-    if (finalError) {
+   if (finalError) {
       logToFile(`[API] INSERT ERROR: ${finalError.message} (Code: ${finalError.code})`);
+      logToFile(`[API] INSERT ERROR RAW DETAILS: ${finalError.details || 'none provided'}`);
+      logToFile(`[API] INSERT ERROR HINT: ${finalError.hint || 'none provided'}`);
       return res.status(500).json({ 
         error: "DATABASE_REJECTION", 
         message: finalError.message, 
         code: finalError.code,
         hint: finalError.hint,
-        details: `This error occurred while trying to save ${JSON.stringify(answers).length} characters of data. If this is a 'too long' error, your Supabase column type is likely too small.`
+        details: finalError.details || `This error occurred while trying to save ${JSON.stringify(answers).length} characters of data. If this is a 'too long' error, your Supabase column type is likely too small.`
       });
     }
-
     if (!finalData || finalData.length === 0) {
       logToFile(`[API] RLS WARNING: Insert returned no data. Status: ${finalStatus}`);
       return res.status(500).json({ 
