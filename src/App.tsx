@@ -6,6 +6,7 @@ import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from 
 import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
+
 const Letterhead = () => (
   <header className="bg-navy p-8 md:p-12 -mx-8 md:-mx-16 -mt-8 md:-mt-16 mb-12 flex flex-col items-center text-center border-b border-gold/20">
     <Link to="/" className="flex flex-col items-center hover:opacity-90 transition-opacity">
