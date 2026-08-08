@@ -14,7 +14,7 @@ const Letterhead = () => (
         CONVERGE<sup className="text-xs md:text-sm font-light mt-1 ml-0.5">™</sup>
       </h1>
       <div className="space-y-1 text-white text-sm md:text-base font-sans font-semibold leading-tight tracking-wide subpixel-antialiased opacity-95">
-        <p>Three platforms. One integrated psychological insight.</p>
+        <p>Three platforms. One integrated psychological insight.</p>C:\Users\tomkn\OneDrive\Desktop\CONVERGE PAYMENT PAGE WORKING\converge_assessment_remix_v3-main\src\App.tsx
         <p>Three validated frameworks. One evidence-based hiring insight.</p>
         <p>Three frameworks. One executive advantage.</p>
         <p>Three developmental platforms. One transformational growth tool.</p>
@@ -328,8 +328,12 @@ export default function App() {
                         <span className="text-sm font-black text-navy">{BANKING_DETAILS.bank}</span>
                       </div>
                       <div className="text-left">
-                        <span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Account Holder</span>
+                        
+
+
+<span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Account Holder</span>
                         <span className="text-sm font-black text-navy">{BANKING_DETAILS.accountHolder}</span>
+
                       </div>
                       <div className="text-right">
                         <span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Account Number</span>
@@ -340,8 +344,14 @@ export default function App() {
                         <span className="text-sm font-black text-dark">{BANKING_DETAILS.branchCode}</span>
                       </div>
                     </div>
-                    <p className="text-[10px] text-gold font-black uppercase tracking-[2px] mt-8 bg-navy px-4 py-2 rounded">
-                      Reference: {BANKING_DETAILS.reference}
+                
+ <p className="text-[10px] text-gold font-black uppercase tracking-[2px] mt-8 bg-navy px-4 py-2 rounded">
+                
+
+
+
+
+      Reference: {BANKING_DETAILS.reference}
                     </p>
                   </div>
                 </div>
@@ -584,7 +594,11 @@ export default function App() {
       <Route path="/thank-you" element={
         <div className="page-container p-8 md:p-16 bg-cream">
           <Letterhead />
-          <main className="flex-1 flex flex-col items-center justify-center text-center py-12 max-w-5xl mx-auto">
+          
+
+
+
+<main className="flex-1 flex flex-col items-center justify-center text-center py-12 max-w-5xl mx-auto">
             <div className="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center text-gold mb-8">
               <CheckCircle2 className="w-10 h-10" />
             </div>
@@ -609,7 +623,10 @@ export default function App() {
 
             <div className="w-full max-w-4xl bg-white border border-gold/20 shadow-2xl overflow-hidden mb-12 text-left">
               <div className="bg-navy p-6 text-center">
-                <h3 className="text-gold font-sans font-bold tracking-[3px] uppercase text-sm antialiased">Payment Information</h3>
+               
+
+
+ <h3 className="text-gold font-sans font-bold tracking-[3px] uppercase text-sm antialiased">Payment Information</h3>
               </div>
               <div className="p-8 space-y-10">
                 {/* Pricing Table */}
@@ -642,6 +659,11 @@ export default function App() {
                   {PRICING.paymentNote}
                 </p>
 
+
+
+
+
+
                 {/* Payment Options Section */}
                 <div className="px-4">
                   <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -670,13 +692,25 @@ export default function App() {
                       </table>
                     </div>
 
-                    {/* Yoko Integration */}
-                    <div className="space-y-4">
-                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Yoko)</h4>
-                      <div className="h-full flex flex-col items-center justify-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
+
+
+
+  {/* Yoko Integration */}
+      
+  <div className="space-y-4">
+                     
+<h4 className="font-sat-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Yoko)ns font-bold tex</h4>
+
+                     <div className="h-full flex flex-col items-center justify-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
+
                         <div className="mb-6 text-center">
-                          <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">Secure Instant EFT & Card</p>
-                          <p className="text-[8px] text-grey uppercase tracking-tighter">Powered by Yoko South Africa</p>
+
+
+                          <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">
+                          Secure Instant EFT & Card                                                                                                                       
+                         </p>                        
+                         <p className="text-[8px] text-grey uppercase tracking-tighter">                                                              
+                         Powered by Yoko South Africa</p>
                         </div>
                         
                         <YokoButton />
@@ -689,9 +723,16 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="bg-cream p-6 text-center border-t border-gold/10">
+              
+
+<div className="bg-cream p-6 text-center border-t border-gold/10">
                 <p className="text-[10px] text-grey font-bold uppercase tracking-[3px] antialiased">
-                  Reference: {BANKING_DETAILS.reference}
+                 
+
+
+
+
+ Reference: {BANKING_DETAILS.reference}
                 </p>
               </div>
             </div>
@@ -721,6 +762,7 @@ export default function App() {
   );
 }
 
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('admin_auth') === 'true';
   if (!isAuthenticated) {
@@ -745,7 +787,13 @@ function AdminLogin() {
       localStorage.setItem('admin_auth', 'true');
       navigate('/admin');
     } else {
-      setError('Invalid administrative credentials.');
+     
+
+
+
+
+
+ setError('Invalid administrative credentials.');
     }
   };
 
