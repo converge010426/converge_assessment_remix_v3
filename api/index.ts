@@ -4,6 +4,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { getSupabase } from "../src/lib/supabase.js";
 
@@ -83,12 +84,67 @@ async function sendEmail(to: string, subject: string, text: string, attachments:
 
 logToFile("API Server Initializing...");
 
+// --- Server-side admin authentication ---
+// ADMIN_PASSWORD is a server-only env var (no VITE_ prefix, so it is never
+// bundled into client JS). Falls back to the existing client-side default
+// so behavior is unchanged until a dedicated server secret is configured.
+const ADMIN_SECRET = process.env.ADMIN_PASSWORD || process.env.VITE_ADMIN_PASSWORD || 'admin123';
+const ADMIN_TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function signAdminToken(): string {
+  const issuedAt = Date.now();
+  const expiresAt = issuedAt + ADMIN_TOKEN_TTL_MS;
+  const payload = `${issuedAt}.${expiresAt}`;
+  const sig = crypto.createHmac('sha256', ADMIN_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}.${sig}`).toString('base64');
+}
+
+function verifyAdminToken(token: string | undefined): boolean {
+  if (!token) return false;
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('utf8');
+    const parts = decoded.split('.');
+    if (parts.length !== 3) return false;
+    const [issuedAt, expiresAt, sig] = parts;
+    const expectedSig = crypto.createHmac('sha256', ADMIN_SECRET).update(`${issuedAt}.${expiresAt}`).digest('hex');
+    const sigBuf = Buffer.from(sig);
+    const expectedBuf = Buffer.from(expectedSig);
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+      return false;
+    }
+    if (Date.now() > Number(expiresAt)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+  if (!verifyAdminToken(token)) {
+    logToFile(`[API] Unauthorized admin request blocked: ${req.method} ${req.path}`);
+    return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Admin authentication required.' });
+  }
+  next();
+}
+
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+app.post("/api/admin/login", (req, res) => {
+  const { password } = req.body || {};
+  if (password && password === ADMIN_SECRET) {
+    logToFile('[API] Admin login successful.');
+    return res.json({ status: 'ok', token: signAdminToken() });
+  }
+  logToFile('[API] Admin login failed: invalid credentials.');
+  return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Invalid administrative credentials.' });
+});
+
 // Test email endpoint
-app.get("/api/admin/test-email", async (req, res) => {
+app.get("/api/admin/test-email", requireAdminAuth, async (req, res) => {
   const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
   const result = await sendEmail(
     adminEmail,
@@ -99,7 +155,7 @@ app.get("/api/admin/test-email", async (req, res) => {
 });
 
 // Diagnostic endpoint for environment variables
-app.get("/api/admin/diagnostics", (req, res) => {
+app.get("/api/admin/diagnostics", requireAdminAuth, (req, res) => {
   const envKeys = Object.keys(process.env).filter(key => 
     key.startsWith('SMTP_') || 
     key.startsWith('SUPABASE_') || 
@@ -366,7 +422,7 @@ Admin Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/
   }
 });
 
-app.post("/api/admin/generate-report", async (req, res) => {
+app.post("/api/admin/generate-report", requireAdminAuth, async (req, res) => {
   const { id } = req.body;
   logToFile(`[API] Admin requesting to generate report for ID ${id}`);
   if (!id) return res.status(400).json({ error: "ID required" });
@@ -421,7 +477,7 @@ app.post("/api/admin/generate-report", async (req, res) => {
   }
 });
 
-app.post("/api/admin/send-report", async (req, res) => {
+app.post("/api/admin/send-report", requireAdminAuth, async (req, res) => {
   const { id, email, name, reportUrl: providedUrl } = req.body;
   logToFile(`[API] Admin requesting to send report for ID ${id} to ${email}`);
 
@@ -489,7 +545,7 @@ app.post("/api/admin/send-report", async (req, res) => {
   }
 });
 
-app.get("/api/results", async (req, res) => {
+app.get("/api/results", requireAdminAuth, async (req, res) => {
   logToFile("API: GET /api/results called");
   try {
     const supabase = getSupabase(true);
@@ -535,7 +591,7 @@ app.get("/api/results", async (req, res) => {
   }
 });
 
-app.patch("/api/results/:id", async (req, res) => {
+app.patch("/api/results/:id", requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
   logToFile(`[API] Attempting to update submission ${id} with: ${JSON.stringify(updates)}`);
@@ -564,7 +620,7 @@ app.patch("/api/results/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/results/:id", async (req, res) => {
+app.delete("/api/results/:id", requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   logToFile(`Attempting to delete submission ${id}`);
   try {

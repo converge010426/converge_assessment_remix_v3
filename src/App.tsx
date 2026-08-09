@@ -763,6 +763,24 @@ export default function App() {
 }
 
 
+// Admin-only fetch helper: attaches the server-verified admin token
+// (obtained at login from /api/admin/login) to admin API requests.
+// Not used by any customer-facing request.
+async function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = localStorage.getItem('admin_token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    localStorage.removeItem('admin_auth');
+    localStorage.removeItem('admin_token');
+    window.location.href = '/admin/login';
+  }
+  return res;
+}
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('admin_auth') === 'true';
   if (!isAuthenticated) {
@@ -776,24 +794,25 @@ function AdminLogin() {
   const [error, setError] = React.useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const adminPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || 'admin123';
-    if (!adminPassword) {
-      setError('System Error: Admin password not configured in environment.');
-      return;
-    }
-    if (password === adminPassword) {
-      localStorage.setItem('admin_auth', 'true');
-      navigate('/admin');
-    } else {
-     
-
-
-
-
-
- setError('Invalid administrative credentials.');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('admin_auth', 'true');
+        localStorage.setItem('admin_token', data.token);
+        navigate('/admin');
+      } else {
+        setError('Invalid administrative credentials.');
+      }
+    } catch (err) {
+      setError('System Error: Could not reach the server.');
     }
   };
 
@@ -854,7 +873,7 @@ function AdminDashboard() {
     
     if (deletingId === id) {
       try {
-        const res = await fetch(`/api/results/${id}`, { method: 'DELETE' });
+        const res = await adminFetch(`/api/results/${id}`, { method: 'DELETE' });
         if (res.ok) {
           setSubmissions(prev => prev.filter(s => s.id !== id));
           setDeletingId(null);
@@ -884,7 +903,7 @@ function AdminDashboard() {
     btn.innerText = 'SENDING...';
 
     try {
-      const res = await fetch('/api/admin/send-report', {
+      const res = await adminFetch('/api/admin/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -914,7 +933,7 @@ function AdminDashboard() {
 
   React.useEffect(() => {
     console.log('[Dashboard] Fetching results from /api/results...');
-    fetch('/api/results')
+    adminFetch('/api/results')
       .then(async res => {
         console.log('[Dashboard] Response status:', res.status);
         // Capture diagnostic headers
@@ -1050,7 +1069,7 @@ function AdminDashboard() {
           <div className="flex gap-4 mt-4">
             <button 
               onClick={async () => {
-                const res = await fetch('/api/admin/diagnostics');
+                const res = await adminFetch('/api/admin/diagnostics');
                 const data = await res.json();
                 alert(JSON.stringify(data, null, 2));
               }} 
@@ -1060,7 +1079,7 @@ function AdminDashboard() {
             </button>
             <button 
               onClick={async () => {
-                const res = await fetch('/api/admin/test-email');
+                const res = await adminFetch('/api/admin/test-email');
                 const data = await res.json();
                 alert(JSON.stringify(data, null, 2));
               }} 
@@ -1171,7 +1190,7 @@ function AdminDashboard() {
                           btn.disabled = true;
                           btn.innerText = 'GENERATING...';
                           try {
-                            const res = await fetch('/api/admin/generate-report', {
+                            const res = await adminFetch('/api/admin/generate-report', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ id: sub.id })
@@ -1243,7 +1262,7 @@ function AdminResultDetail() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    fetch('/api/results')
+    adminFetch('/api/results')
       .then(async res => {
         if (!res.ok) {
           const err = await res.json();
@@ -1308,7 +1327,7 @@ function AdminResultDetail() {
     if (!submission || submission.report_url || isGenerating) return;
     setIsGenerating(true);
     try {
-      const res = await fetch('/api/admin/generate-report', {
+      const res = await adminFetch('/api/admin/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: submission.id })
@@ -1333,7 +1352,7 @@ function AdminResultDetail() {
   const handleSaveNotes = async () => {
     setIsSavingNotes(true);
     try {
-      const res = await fetch(`/api/results/${submission.id}`, {
+      const res = await adminFetch(`/api/results/${submission.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ admin_notes: adminNotes })
@@ -1354,7 +1373,7 @@ function AdminResultDetail() {
     if (!confirm(`Send report to ${email}?`)) return;
     setIsSending(true);
     try {
-      const res = await fetch('/api/admin/send-report', {
+      const res = await adminFetch('/api/admin/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: submission.id, email, name, reportUrl: reportPath })
