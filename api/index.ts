@@ -486,6 +486,25 @@ app.post("/api/admin/send-report", requireAdminAuth, async (req, res) => {
   }
 
   try {
+    // Payment gate: the report must never be emailed to the client unless
+    // payment_status is exactly 'paid'. Anything else - 'pending', null,
+    // missing, or any unexpected value (including on old submissions created
+    // before this column existed) - is treated as NOT PAID.
+    const paymentGateSupabase = getSupabase(true);
+    const { data: paymentCheck, error: paymentCheckError } = await paymentGateSupabase
+      .from('submissions')
+      .select('payment_status')
+      .eq('id', id)
+      .single();
+
+    if (paymentCheckError || !paymentCheck || paymentCheck.payment_status !== 'paid') {
+      logToFile(`[API] BLOCKED send-report for ID ${id}: payment_status is not 'paid' (was: ${paymentCheck?.payment_status ?? 'unknown/missing'})`);
+      return res.status(403).json({
+        error: "PAYMENT_NOT_CONFIRMED",
+        message: "This submission has not been marked as paid. Mark the payment as received before sending the report."
+      });
+    }
+
     const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
     const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
     
@@ -542,6 +561,31 @@ app.post("/api/admin/send-report", requireAdminAuth, async (req, res) => {
   } catch (err: any) {
     logToFile(`[API] Failed to send report: ${err.message}`);
     res.status(500).json({ error: "Failed to send report", message: err.message });
+  }
+});
+
+app.post("/api/admin/mark-paid", requireAdminAuth, async (req, res) => {
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: "ID required" });
+
+  try {
+    const supabase = getSupabase(true);
+    const { data, error } = await supabase
+      .from('submissions')
+      .update({ payment_status: 'paid' })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      logToFile(`[API] Failed to mark ID ${id} as paid: ${error.message}`);
+      return res.status(500).json({ error: "UPDATE_FAILED", message: error.message });
+    }
+
+    logToFile(`[API] Admin marked submission ID ${id} as PAID.`);
+    return res.json({ status: "ok", data });
+  } catch (err: any) {
+    logToFile(`[API] Error marking ID ${id} as paid: ${err.message}`);
+    return res.status(500).json({ error: "Internal server error", message: err.message });
   }
 });
 

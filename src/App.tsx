@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
-import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard, Heart } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
 
 
@@ -14,7 +14,7 @@ const Letterhead = () => (
         CONVERGE<sup className="text-xs md:text-sm font-light mt-1 ml-0.5">™</sup>
       </h1>
       <div className="space-y-1 text-white text-sm md:text-base font-sans font-semibold leading-tight tracking-wide subpixel-antialiased opacity-95">
-        <p>Three platforms. One integrated psychological insight.</p>C:\Users\tomkn\OneDrive\Desktop\CONVERGE PAYMENT PAGE WORKING\converge_assessment_remix_v3-main\src\App.tsx
+        <p>Three platforms. One integrated psychological insight.</p>
         <p>Three validated frameworks. One evidence-based hiring insight.</p>
         <p>Three frameworks. One executive advantage.</p>
         <p>Three developmental platforms. One transformational growth tool.</p>
@@ -182,11 +182,70 @@ export default function App() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-warm p-8 border-b border-gold/20 mb-12"
+              className="mb-16 max-w-3xl"
             >
-              <p className="text-lg leading-relaxed text-dark font-bold max-w-2xl">
-                Welcome to the <strong>CONVERGE<sup>™</sup></strong> assessment. This protocol integrates MBTI, IPIP Big Five, and Emotional Intelligence frameworks to build a verified psychological architecture of your personality profile.
+              <h2 className="font-sans text-2xl md:text-3xl font-bold text-navy leading-snug mb-4 antialiased">
+                A verified psychological architecture, built from three validated frameworks.
+              </h2>
+              <p className="text-base leading-relaxed text-grey">
+                <strong className="text-dark">CONVERGE<sup>™</sup></strong> integrates MBTI, IPIP Big Five, and Emotional Intelligence assessment into a single, evidence-based profile — whether you're exploring your own personality, or evaluating fit for a role.
               </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-16"
+            >
+              <h2 className="section-label mb-6">Three Validated Frameworks</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="p-6 bg-white border border-blue-100 border-t-4 border-t-blue-500">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                    <Brain className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-sans font-bold text-navy uppercase tracking-wide text-sm mb-2">MBTI</h3>
+                  <p className="text-sm text-grey leading-relaxed">
+                    Myers-Briggs typology based on Carl Jung's model — how you perceive the world and make decisions, expressed as one of sixteen personality types.
+                  </p>
+                </div>
+                <div className="p-6 bg-white border border-purple-100 border-t-4 border-t-purple-500">
+                  <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+                    <List className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-sans font-bold text-navy uppercase tracking-wide text-sm mb-2">IPIP Big Five</h3>
+                  <p className="text-sm text-grey leading-relaxed">
+                    A research-grounded model of personality across five core traits, offering a broader, more nuanced dimension than type alone.
+                  </p>
+                </div>
+                <div className="p-6 bg-white border border-emerald-100 border-t-4 border-t-emerald-500">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                    <Heart className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-sans font-bold text-navy uppercase tracking-wide text-sm mb-2">Emotional Intelligence</h3>
+                  <p className="text-sm text-grey leading-relaxed">
+                    How you recognise, understand, and manage emotion — in yourself and with others — a strong predictor of real-world performance.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-16 grid sm:grid-cols-3 gap-6 max-w-4xl"
+            >
+              <div>
+                <p className="font-sans font-black text-navy text-2xl mb-1">24 hrs</p>
+                <p className="text-xs text-grey uppercase tracking-wide font-bold">Report delivered by email</p>
+              </div>
+              <div>
+                <p className="font-sans font-black text-navy text-2xl mb-1">3</p>
+                <p className="text-xs text-grey uppercase tracking-wide font-bold">Validated frameworks, one profile</p>
+              </div>
+              <div>
+                <p className="font-sans font-black text-navy text-2xl mb-1">ZAR</p>
+                <p className="text-xs text-grey uppercase tracking-wide font-bold">Priced for individuals and teams</p>
+              </div>
             </motion.div>
 
             <div className="space-y-12 max-w-6xl">
@@ -195,27 +254,26 @@ export default function App() {
                 <div className="grid md:grid-cols-3 gap-6">
                   <button 
                     onClick={() => setSelectedProduct('mbti')}
-                    className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'mbti' ? 'bg-navy text-white border-navy shadow-xl scale-[1.02]' : 'bg-white text-dark border-gold/20 hover:border-gold'}`}
+                    className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'mbti' ? 'bg-blue-600 text-white border-blue-600 shadow-xl scale-[1.02]' : 'bg-white text-dark border-blue-100 hover:border-blue-400'}`}
                   >
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${selectedProduct === 'mbti' ? 'bg-gold text-navy' : 'bg-gold/10 text-gold'}`}>
+                          <div className={`p-2 rounded-full ${selectedProduct === 'mbti' ? 'bg-white text-blue-600' : 'bg-blue-50 text-blue-600'}`}>
                             <Brain className="w-6 h-6" />
                           </div>
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'mbti' ? 'text-gold' : 'text-grey'}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'mbti' ? 'text-white/90' : 'text-blue-600'}`}>
                             Individual
                           </span>
                         </div>
-                        {selectedProduct === 'mbti' && <CheckCircle2 className="w-6 h-6 text-gold" />}
+                        {selectedProduct === 'mbti' && <CheckCircle2 className="w-6 h-6 text-white" />}
                       </div>
-                      <h3 className="text-xl font-bold mb-2">{PRICING.products.mbti.name}</h3>
+                      <h3 className="text-xl font-bold mb-2">MBTI Basic</h3>
                       <p className={`text-sm mb-6 ${selectedProduct === 'mbti' ? 'text-white/80' : 'text-grey'}`}>
                         {PRICING.products.mbti.description}
                       </p>
                     </div>
-                    <div className="flex justify-between items-end mt-auto">
-                      <span className={`text-base font-black tracking-widest uppercase ${selectedProduct === 'mbti' ? 'text-gold' : 'text-navy/70'}`}>Option 1</span>
+                    <div className="flex justify-end items-end mt-auto">
                       <div className="text-right">
                         <span className="text-4xl font-black leading-none">{PRICING.products.mbti.price}</span>
                       </div>
@@ -224,27 +282,26 @@ export default function App() {
 
                   <button 
                     onClick={() => setSelectedProduct('comprehensive')}
-                    className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'comprehensive' ? 'bg-navy text-white border-navy shadow-xl scale-[1.02]' : 'bg-white text-dark border-gold/20 hover:border-gold'}`}
+                    className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'comprehensive' ? 'bg-purple-600 text-white border-purple-600 shadow-xl scale-[1.02]' : 'bg-white text-dark border-purple-100 hover:border-purple-400'}`}
                   >
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${selectedProduct === 'comprehensive' ? 'bg-gold text-navy' : 'bg-gold/10 text-gold'}`}>
+                          <div className={`p-2 rounded-full ${selectedProduct === 'comprehensive' ? 'bg-white text-purple-600' : 'bg-purple-50 text-purple-600'}`}>
                             <Zap className="w-6 h-6" />
                           </div>
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'comprehensive' ? 'text-gold' : 'text-grey'}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'comprehensive' ? 'text-white/90' : 'text-purple-600'}`}>
                             Individual
                           </span>
                         </div>
-                        {selectedProduct === 'comprehensive' && <CheckCircle2 className="w-6 h-6 text-gold" />}
+                        {selectedProduct === 'comprehensive' && <CheckCircle2 className="w-6 h-6 text-white" />}
                       </div>
-                      <h3 className="text-xl font-bold mb-2">{PRICING.products.comprehensive.name}</h3>
+                      <h3 className="text-xl font-bold mb-2">Comprehensive</h3>
                       <p className={`text-sm mb-6 ${selectedProduct === 'comprehensive' ? 'text-white/80' : 'text-grey'}`}>
                         {PRICING.products.comprehensive.description}
                       </p>
                     </div>
-                    <div className="flex justify-between items-end mt-auto">
-                      <span className={`text-base font-black tracking-widest uppercase ${selectedProduct === 'comprehensive' ? 'text-gold' : 'text-navy/70'}`}>Option 2</span>
+                    <div className="flex justify-end items-end mt-auto">
                       <div className="text-right">
                         <span className="text-4xl font-black leading-none">{PRICING.products.comprehensive.price}</span>
                       </div>
@@ -253,27 +310,26 @@ export default function App() {
 
                   <button 
                     onClick={() => setSelectedProduct('recruiter')}
-                    className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'recruiter' ? 'bg-navy text-white border-navy shadow-xl scale-[1.02]' : 'bg-white text-dark border-gold/20 hover:border-gold'}`}
+                    className={`p-7 border-2 text-left transition-all relative flex flex-col justify-between shadow-lg ${selectedProduct === 'recruiter' ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xl scale-[1.02]' : 'bg-emerald-50/40 text-dark border-emerald-200 hover:border-emerald-500'}`}
                   >
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${selectedProduct === 'recruiter' ? 'bg-gold text-navy' : 'bg-gold/10 text-gold'}`}>
+                          <div className={`p-2 rounded-full ${selectedProduct === 'recruiter' ? 'bg-white text-emerald-700' : 'bg-emerald-100 text-emerald-700'}`}>
                             <ShieldCheck className="w-6 h-6" />
                           </div>
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'recruiter' ? 'text-gold' : 'text-grey'}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedProduct === 'recruiter' ? 'text-white/90' : 'text-emerald-700'}`}>
                             Recruiter
                           </span>
                         </div>
-                        {selectedProduct === 'recruiter' && <CheckCircle2 className="w-6 h-6 text-gold" />}
+                        {selectedProduct === 'recruiter' && <CheckCircle2 className="w-6 h-6 text-white" />}
                       </div>
-                      <h3 className="text-xl font-bold mb-2">{PRICING.products.recruiter.name}</h3>
+                      <h3 className="text-xl font-bold mb-2">Recruiter All-in</h3>
                       <p className={`text-sm mb-6 ${selectedProduct === 'recruiter' ? 'text-white/80' : 'text-grey'}`}>
                         {PRICING.products.recruiter.description}
                       </p>
                     </div>
-                    <div className="flex justify-between items-end mt-auto">
-                      <span className={`text-base font-black tracking-widest uppercase ${selectedProduct === 'recruiter' ? 'text-gold' : 'text-navy/70'}`}>Option 3</span>
+                    <div className="flex justify-end items-end mt-auto">
                       <div className="text-right">
                         <span className="text-4xl font-black leading-none">{PRICING.products.recruiter.price}</span>
                       </div>
@@ -891,6 +947,34 @@ function AdminDashboard() {
     }
   };
 
+  const handleMarkPaid = async (e: React.MouseEvent, sub: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm(`Mark payment as received for ${sub.name} (${sub.email})?`)) return;
+
+    const btn = e.currentTarget as HTMLButtonElement;
+    btn.disabled = true;
+
+    try {
+      const res = await adminFetch('/api/admin/mark-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: sub.id })
+      });
+
+      if (res.ok) {
+        setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, payment_status: 'paid' } : s));
+      } else {
+        alert('Failed to mark as paid.');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      alert('Error marking payment.');
+      btn.disabled = false;
+    }
+  };
+
   const handleSendReport = async (e: React.MouseEvent, sub: any) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1160,6 +1244,27 @@ function AdminDashboard() {
                   <div className="text-[8px] font-bold tracking-widest uppercase text-gold mb-1">
                     {sub.product === 'recruiter' ? 'Converge 3' : sub.product === 'comprehensive' ? 'Converge 2' : 'Converge 1'}
                   </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {sub.payment_status === 'paid' ? (
+                      <span className="flex items-center gap-1 bg-green-600/10 text-green-600 px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase border border-green-600/20">
+                        <CheckCircle2 className="w-2 h-2" />
+                        Paid
+                      </span>
+                    ) : (
+                      <>
+                        <span className="flex items-center gap-1 bg-grey/10 text-grey px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase border border-grey/20">
+                          <Lock className="w-2 h-2" />
+                          Payment Pending
+                        </span>
+                        <button
+                          onClick={(e) => handleMarkPaid(e, sub)}
+                          className="flex items-center gap-1 bg-navy text-white px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase hover:bg-gold transition-colors border border-navy"
+                        >
+                          Mark Paid
+                        </button>
+                      </>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mt-2">
                     {(sub.reportPath || sub.report_url) ? (
                       <>
@@ -1174,8 +1279,10 @@ function AdminDashboard() {
                           Preview Report
                         </a>
                         <button
-                          onClick={(e) => handleSendReport(e, sub)}
-                          className={`flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase transition-colors border ${sub.email_sent ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-navy text-white border-navy hover:bg-gold hover:border-gold'}`}
+                          onClick={(e) => sub.payment_status === 'paid' ? handleSendReport(e, sub) : e.preventDefault()}
+                          disabled={sub.payment_status !== 'paid'}
+                          title={sub.payment_status !== 'paid' ? 'Mark payment as received before sending' : undefined}
+                          className={`flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase transition-colors border disabled:opacity-40 disabled:cursor-not-allowed ${sub.email_sent ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-navy text-white border-navy hover:bg-gold hover:border-gold'}`}
                         >
                           <Mail className="w-2 h-2" />
                           {sub.email_sent ? 'SENT' : 'SEND TO CLIENT'}
@@ -1365,7 +1472,29 @@ function AdminResultDetail() {
     }
   };
 
+  const handleMarkPaid = async () => {
+    if (!confirm(`Mark payment as received for ${name} (${email})?`)) return;
+    try {
+      const res = await adminFetch('/api/admin/mark-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: submission.id })
+      });
+      if (res.ok) {
+        setSubmission((prev: any) => ({ ...prev, payment_status: 'paid' }));
+      } else {
+        alert('Failed to mark as paid.');
+      }
+    } catch (err) {
+      alert('Error marking payment.');
+    }
+  };
+
   const handleSendReport = async () => {
+    if (submission.payment_status !== 'paid') {
+      alert('This submission has not been marked as paid. Mark payment as received before sending.');
+      return;
+    }
     if (!reviewChecked) {
       alert('Please complete the review checklist before sending.');
       return;
@@ -1400,6 +1529,23 @@ function AdminResultDetail() {
           Back to Dashboard
         </Link>
         <div className="text-right flex items-center gap-4">
+          {submission.payment_status === 'paid' ? (
+            <span className="bg-green-600/10 text-green-600 border border-green-600/20 px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Paid
+            </span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="bg-grey/10 text-grey border border-grey/20 px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Payment Pending
+              </span>
+              <button
+                onClick={handleMarkPaid}
+                className="bg-navy text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase hover:bg-gold transition-colors"
+              >
+                Mark Paid
+              </button>
+            </div>
+          )}
           {submission.email_sent && (
             <span className="bg-green-600 text-white px-3 py-1 text-[8px] font-bold tracking-[2px] uppercase flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Sent to Client
@@ -1409,14 +1555,18 @@ function AdminResultDetail() {
             <div className="relative group">
               <button
                 onClick={handleSendReport}
-                disabled={isSending}
+                disabled={isSending || submission.payment_status !== 'paid'}
                 className={`flex items-center gap-2 px-4 py-1 text-[10px] font-bold tracking-[2px] uppercase transition-colors disabled:opacity-50
-                  ${reviewChecked ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
+                  ${(reviewChecked && submission.payment_status === 'paid') ? 'bg-navy text-white hover:bg-gold' : 'bg-grey/20 text-grey cursor-not-allowed'}`}
               >
                 <Mail className="w-3 h-3" />
                 {isSending ? 'Sending...' : 'Approve & Send'}
               </button>
-              {!reviewChecked && (
+              {submission.payment_status !== 'paid' ? (
+                <div className="absolute top-full right-0 mt-1 hidden group-hover:block bg-navy text-white text-[7px] px-2 py-1 whitespace-nowrap z-10">
+                  Mark payment as received to enable sending
+                </div>
+              ) : !reviewChecked && (
                 <div className="absolute top-full right-0 mt-1 hidden group-hover:block bg-navy text-white text-[7px] px-2 py-1 whitespace-nowrap z-10">
                   Complete checklist below to enable sending
                 </div>
