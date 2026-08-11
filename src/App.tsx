@@ -1,7 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
+
+
+
 import PrivacyPolicy from './PrivacyPolicy';
+import Terms from './Terms';
+
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
 import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard, Heart } from 'lucide-react';
@@ -175,7 +180,10 @@ export default function App() {
   return (
     <Routes>
 <Route path="/privacy" element={<PrivacyPolicy />} />
-       <Route path="/" element={
+       <Route path="/terms" element={<Terms />} />
+
+
+  <Route path="/" element={
         <div className="page-container p-8 md:p-16">
           <Letterhead />
           <main className="flex-1 py-12">
