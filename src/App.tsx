@@ -1,12 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
+import PrivacyPolicy from './PrivacyPolicy';
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
 import { ChevronRight, ChevronLeft, CheckCircle2, Download, FileText, ShieldCheck, Zap, Info, Brain, List, User, Trash2, Lock, Mail, X, Loader2, CreditCard, Heart } from 'lucide-react';
 import { PRICING, BANKING_DETAILS, SYSTEM_VERSION } from './constants';
-
-
 const Letterhead = () => (
   <header className="bg-navy p-8 md:p-12 -mx-8 md:-mx-16 -mt-8 md:-mt-16 mb-12 flex flex-col items-center text-center border-b border-gold/20">
     <Link to="/" className="flex flex-col items-center hover:opacity-90 transition-opacity">
@@ -175,7 +174,8 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={
+<Route path="/privacy" element={<PrivacyPolicy />} />
+       <Route path="/" element={
         <div className="page-container p-8 md:p-16">
           <Letterhead />
           <main className="flex-1 py-12">
