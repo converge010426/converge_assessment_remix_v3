@@ -412,22 +412,47 @@ export default function App() {
                 </div>
 
                 <div className="p-8 bg-warm/30 border-t border-gold/10">
-                  <p className="text-[10px] text-navy font-black italic text-center mb-8 tracking-wide">
-                    {PRICING.paymentNote}
-                  </p>
                   
-                  <div className="flex flex-col items-center">
-                    <h3 className="text-navy font-sans font-black tracking-[3px] uppercase text-[11px] mb-6 border-b border-gold/30 pb-2">Banking Details ({PRICING.currency})</h3>
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 max-w-md w-full">
+<p className="text-[10px] text-navy font-black italic text-center mb-6 tracking-wide">
+  {PRICING.paymentNote}
+</p>
+
+<div className="text-center mb-8 px-4">
+  <h3 className="text-navy font-sans font-black tracking-[3px] uppercase text-[11px] mb-3">
+    Why is CONVERGE so accessible?
+  </h3>
+  
+<p className="text-[12px] text-navy font-medium leading-relaxed max-w-xl mx-auto">
+ 
+
+
+ CONVERGE is currently offered at special introductory marketplace pricing
+    while we build our client community. We believe these integrated
+    assessments can add meaningful value to personal relationships, workplace
+    relationships, recruitment and career decisions. Our aim is to make that
+    value accessible while introducing CONVERGE to the market.
+  </p>
+</div>
+
+<div className="flex flex-col items-center">
+  <h3 className="text-navy font-sans font-black tracking-[3px] uppercase text-[13px] mb-6 border-b-2 border-gold pb-2">
+    PAY WITH EFT
+  </h3>
+
+  <h3 className="text-navy font-sans font-black tracking-[3px] uppercase text-[11px] mb-6 border-b border-gold/30 pb-2">
+    Banking Details ({PRICING.currency})
+  </h3>
+
+                    
+
+
+<div className="grid grid-cols-2 gap-x-12 gap-y-4 max-w-md w-full">
                       <div className="text-right">
                         <span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Bank</span>
                         <span className="text-sm font-black text-navy">{BANKING_DETAILS.bank}</span>
                       </div>
                       <div className="text-left">
-                        
-
-
-<span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Account Holder</span>
+                        <span className="text-[9px] text-grey font-black uppercase tracking-widest block mb-1">Account Holder</span>
                         <span className="text-sm font-black text-navy">{BANKING_DETAILS.accountHolder}</span>
 
                       </div>
