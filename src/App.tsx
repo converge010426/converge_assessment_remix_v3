@@ -30,19 +30,50 @@ const Letterhead = () => (
 
 const Footer = () => (
   <footer className="py-12 border-t border-gold/10 mt-auto">
-    <div className="flex flex-col items-center text-center space-y-2">
+    <div className="flex flex-col items-center text-center space-y-3">
       <p className="font-sans text-[10px] font-bold tracking-[3px] text-grey uppercase">
         © {new Date().getFullYear()} CONVERGE™ • ALL RIGHTS RESERVED
       </p>
+
+      <div className="flex items-center gap-4 font-sans text-[9px] tracking-widest uppercase">
+        <Link
+          to="/privacy"
+          className="text-grey hover:text-gold transition-colors"
+        >
+          Privacy Policy
+        </Link>
+
+        <span className="text-gold/30">•</span>
+
+        <Link
+          to="/terms"
+          className="text-grey hover:text-gold transition-colors"
+        >
+          Terms of Service
+        </Link>
+
+        <span className="text-gold/30">•</span>
+
+        <Link
+          to="/support"
+          className="text-grey hover:text-gold transition-colors"
+        >
+          Support
+        </Link>
+      </div>
+
       <p className="font-sans text-[8px] tracking-[1px] text-grey/60 uppercase max-w-xs">
-        This assessment protocol and its integrated psychological architecture are protected intellectual property.
+        This assessment protocol and its integrated psychological architecture
+        are protected intellectual property.
       </p>
+
       <p className="font-sans text-[8px] text-gold/50 uppercase mt-4 tracking-widest">
         System Version: {SYSTEM_VERSION}
       </p>
     </div>
   </footer>
 );
+
 
 const YokoButton = () => {
   const yokoUrl = 'https://pay.yoco.com/heritage-family-artifacts';
