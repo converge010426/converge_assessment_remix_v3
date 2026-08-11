@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
-
+import Support from './Support';
 
 
 import PrivacyPolicy from './PrivacyPolicy';
 import Terms from './Terms';
+
 
 import { questions, Question } from './questions';
 import { calculateResults, typeDescriptions, AssessmentResults, MBTIType } from './logic';
@@ -176,12 +177,12 @@ export default function App() {
   };
 
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-
   return (
-    <Routes>
-<Route path="/privacy" element={<PrivacyPolicy />} />
+   
+ <Routes>
+       <Route path="/privacy" element={<PrivacyPolicy />} />
        <Route path="/terms" element={<Terms />} />
-
+       <Route path="/support" element={<Support />} />
 
   <Route path="/" element={
         <div className="page-container p-8 md:p-16">
