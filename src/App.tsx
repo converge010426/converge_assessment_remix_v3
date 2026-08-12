@@ -79,13 +79,15 @@ const YokoButton = () => {
   const yokoUrl = 'https://pay.yoco.com/heritage-family-artifacts';
   
   return (
-    <a 
+    <div className="page-container p-8 md:p-16">
+      <a
       href={yokoUrl}
       className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg group text-center"
     >
-      <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
-      Pay Now with Yoko
-    </a>
+        <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
+        Pay Now with Yoko
+      </a>
+    </div>
   );
 };
 
@@ -217,7 +219,11 @@ export default function App() {
 
   <Route path="/" element={
         <div className="page-container p-8 md:p-16">
-          <Letterhead />
+          <img
+            src="/converge-hero.png"
+            alt="CONVERGE — Three Frameworks. One You."
+            className="w-full h-auto block mb-12"
+          />
           <main className="flex-1 py-12">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
