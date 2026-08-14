@@ -130,8 +130,17 @@ function requireAdminAuth(req: express.Request, res: express.Response, next: exp
 }
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Yoco webhook: preserve the raw request body for signature verification.
+// IMPORTANT: this must come BEFORE the general JSON parser.
+app.use(
+  "/api/yoco/webhook",
+  express.raw({ type: "application/json", limit: "2mb" })
+);
+
+// General JSON parser for all other API routes.
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 app.post("/api/admin/login", (req, res) => {
   const { password } = req.body || {};
