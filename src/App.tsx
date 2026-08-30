@@ -75,20 +75,52 @@ const Footer = () => (
 );
 
 
-const YokoButton = () => {
-  const yokoUrl = 'https://pay.yoco.com/heritage-family-artifacts';
-  
-  return (
-    <div className="page-container p-8 md:p-16">
-      <a
-      href={yokoUrl}
-      className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg group text-center"
-    >
-        <CreditCard className="w-5 h-5 text-gold group-hover:text-white transition-colors" />
-        Pay Now with Yoko
-      </a>
-    </div>
-  );
+const YocoCheckoutButton = () => {
+  const [isStarting, setIsStarting] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const paymentStatus = localStorage.getItem('last_payment_status');
+
+  if (paymentStatus === 'paid') {
+    return <p className="text-xs text-green-700 font-bold text-center">No payment is required for this assessment.</p>;
+  }
+
+  const startCheckout = async () => {
+    const submissionId = localStorage.getItem('last_submission_id');
+    const checkoutToken = localStorage.getItem('payment_checkout_token');
+    if (!submissionId || !checkoutToken) {
+      setError('Your payment session is unavailable. Please contact CONVERGE with your submission ID.');
+      return;
+    }
+    setIsStarting(true);
+    setError('');
+    try {
+      const response = await fetch('/api/yoco/create-checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId, checkoutToken })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Unable to start secure checkout.');
+      if (data.status === 'paid') {
+        localStorage.setItem('last_payment_status', 'paid');
+        window.location.reload();
+        return;
+      }
+      if (!data.redirectUrl) throw new Error('Checkout did not return a redirect URL.');
+      window.location.assign(data.redirectUrl);
+    } catch (err: any) {
+      setError(err.message || 'Unable to start secure checkout.');
+      setIsStarting(false);
+    }
+  };
+
+  return <div className="w-full">
+    <button type="button" onClick={startCheckout} disabled={isStarting}
+      className="w-full bg-navy text-white py-4 px-6 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-gold transition-all flex items-center justify-center gap-3 shadow-lg disabled:opacity-50">
+      <CreditCard className="w-5 h-5 text-gold" />
+      {isStarting ? 'Opening secure checkout...' : 'Pay securely with Yoco'}
+    </button>
+    {error && <p className="mt-3 text-xs text-red-700 text-center">{error}</p>}
+  </div>;
 };
 
 export default function App() {
@@ -181,6 +213,8 @@ export default function App() {
         localStorage.setItem('submission_history', JSON.stringify(history.slice(0, 5)));
         
         if (data.id) localStorage.setItem('last_submission_id', data.id);
+        if (data.checkoutToken) localStorage.setItem('payment_checkout_token', data.checkoutToken);
+        if (data.paymentStatus) localStorage.setItem('last_payment_status', data.paymentStatus);
         localStorage.setItem('last_product', selectedProduct);
         navigate('/thank-you');
       } else {
@@ -657,7 +691,7 @@ export default function App() {
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     placeholder="e.g. Senior Sales Executive"
-                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/30"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/70"
                   />
                 </div>
 
@@ -684,7 +718,7 @@ export default function App() {
                     value={jobChallenge}
                     onChange={(e) => setJobChallenge(e.target.value)}
                     placeholder="e.g. Requires high emotional resilience"
-                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/30"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors placeholder:text-white/70"
                   />
                 </div>
 
@@ -695,7 +729,7 @@ export default function App() {
                     onChange={(e) => setJobDescription(e.target.value)}
                     placeholder="Paste the job description or key requirements here..."
                     rows={4}
-                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors resize-none placeholder:text-white/30"
+                    className="w-full p-4 bg-navy text-white border border-gold/30 focus:border-gold outline-none font-sans font-black transition-colors resize-none placeholder:text-white/70"
                   />
                 </div>
 
@@ -822,25 +856,14 @@ export default function App() {
 
 
 
-  {/* Yoko Integration */}
-      
   <div className="space-y-4">
-                     
-<h4 className="font-sat-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online Payment (Yoko)ns font-bold tex</h4>
-
-                     <div className="h-full flex flex-col items-center justify-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
-
+                      <h4 className="font-sans font-bold text-navy uppercase text-[10px] tracking-widest border-b border-gold/20 pb-2 text-center">Online payment</h4>
+                     <div className="flex flex-col items-center border border-gold/10 p-6 bg-gold/5 rounded-sm">
                         <div className="mb-6 text-center">
-
-
-                          <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">
-                          Secure Instant EFT & Card                                                                                                                       
-                         </p>                        
-                         <p className="text-[8px] text-grey uppercase tracking-tighter">                                                              
-                         Powered by Yoko South Africa</p>
+                          <p className="text-[10px] text-navy font-bold uppercase tracking-widest mb-2">Secure card payment</p>
+                          <p className="text-[8px] text-grey uppercase tracking-tighter">Powered by Yoco South Africa</p>
                         </div>
-                        
-                        <YokoButton />
+                        <YocoCheckoutButton />
                         
                         <p className="text-[8px] text-grey/60 uppercase tracking-tighter mt-4 text-center">
                           Your report will be processed upon payment verification
@@ -1502,7 +1525,7 @@ function AdminResultDetail() {
   const [isGenerating, setIsGenerating] = React.useState(false);
 
   const handleGenerateReport = React.useCallback(async () => {
-    if (!submission || submission.report_url || isGenerating) return;
+    if (!submission || submission.payment_status !== 'paid' || submission.report_url || isGenerating) return;
     setIsGenerating(true);
     try {
       const res = await adminFetch('/api/admin/generate-report', {
@@ -1522,7 +1545,7 @@ function AdminResultDetail() {
   }, [submission, isGenerating]);
 
   React.useEffect(() => {
-    if (submission && !submission.report_url && !isGenerating) {
+    if (submission && submission.payment_status === 'paid' && !submission.report_url && !isGenerating) {
       handleGenerateReport();
     }
   }, [submission, isGenerating, handleGenerateReport]);

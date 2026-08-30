@@ -7,6 +7,7 @@ import fs from "fs";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { getSupabase } from "../src/lib/supabase.js";
+import { getPaymentProduct } from "../src/paymentCatalog.js";
 
 // Dynamic imports for heavy services to prevent timeout on cold start
 const getReportServices = async () => {
@@ -24,6 +25,38 @@ const getReportServices = async () => {
     }
   }
 };
+
+const sha256 = (value: string) => crypto.createHash('sha256').update(value).digest('hex');
+
+function constantTimeEqual(a: string, b: string) {
+  const aBuffer = Buffer.from(a);
+  const bBuffer = Buffer.from(b);
+  return aBuffer.length === bBuffer.length && crypto.timingSafeEqual(aBuffer, bBuffer);
+}
+
+function publicOrigin() {
+  const origin = process.env.APP_PUBLIC_ORIGIN;
+  if (!origin) throw new Error('APP_PUBLIC_ORIGIN is not configured.');
+  return new URL(origin).origin;
+}
+
+function verifyYocoWebhook(req: express.Request): boolean {
+  const webhookId = req.header('webhook-id');
+  const timestamp = req.header('webhook-timestamp');
+  const signatureHeader = req.header('webhook-signature');
+  const secret = process.env.YOCO_WEBHOOK_SECRET;
+  const rawBody = req.body;
+  if (!webhookId || !timestamp || !signatureHeader || !secret?.startsWith('whsec_') || !Buffer.isBuffer(rawBody)) return false;
+  const seconds = Number(timestamp);
+  if (!Number.isFinite(seconds) || Math.abs(Math.floor(Date.now() / 1000) - seconds) > 180) return false;
+  const key = Buffer.from(secret.slice('whsec_'.length), 'base64');
+  if (!key.length) return false;
+  const expected = crypto.createHmac('sha256', key).update(`${webhookId}.${timestamp}.${rawBody.toString('utf8')}`).digest('base64');
+  return signatureHeader.split(' ').some((entry) => {
+    const [version, signature] = entry.split(',', 2);
+    return version === 'v1' && !!signature && constantTimeEqual(expected, signature);
+  });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -236,13 +269,17 @@ app.post("/api/submit", async (req, res) => {
   if (!name || !email || !results) {
     return res.status(400).json({ error: "Missing required fields" });
   }
+  const paymentProduct = getPaymentProduct(product);
+  if (!paymentProduct) return res.status(400).json({ error: "INVALID_PRODUCT", message: "Unknown assessment product." });
 
   try {
     const supabase = getSupabase(true);
     
     logToFile(`[API] Data sizes - Answers: ${JSON.stringify(answers).length}, Results: ${JSON.stringify(results).length}`);
 
-    // Try inserting as native objects first, then as strings if it fails
+    const paymentRef = crypto.randomBytes(24).toString('base64url');
+    const checkoutToken = crypto.randomBytes(32).toString('base64url');
+    const isComplimentary = paymentProduct.amountCents === 0;
     const payload = { 
       name, 
       email, 
@@ -254,76 +291,17 @@ app.post("/api/submit", async (req, res) => {
       job_title: jobTitle || null,
       job_environment: jobEnvironment || null,
       job_challenge: jobChallenge || null,
-      job_description: jobDescription || null
+      job_description: jobDescription || null,
+      payment_status: isComplimentary ? 'paid' : 'pending',
+      payment_ref: paymentRef,
+      payment_token_hash: sha256(checkoutToken),
+      payment_provider: isComplimentary ? 'complimentary' : null,
+      payment_currency: paymentProduct.currency,
+      payment_amount_cents: paymentProduct.amountCents,
+      paid_at: isComplimentary ? new Date().toISOString() : null
     };
-
-    let finalData = null;
-    let finalError = null;
-    let finalStatus = null;
-
-    logToFile(`[API] Attempting primary insert for ${name}...`);
-    const { data: firstData, error: firstError, status: firstStatus } = await supabase
-      .from('submissions')
-      .insert([payload])
-      .select();
-
-    finalData = firstData;
-    finalError = firstError;
-    finalStatus = firstStatus;
-
-    // If it failed, try a series of fallbacks
-    if (firstError) {
-      logToFile(`[API] Primary insert failed: ${firstError.message} (Code: ${firstError.code})`);
-      
-      // Fallback 1: Try stringifying complex objects (for older TEXT columns)
-      logToFile(`[API] Fallback 1: Trying stringified payload...`);
-      const stringifiedPayload = {
-        ...payload,
-        results: JSON.stringify(results),
-        answers: JSON.stringify(answers)
-      };
-      const { data: retry1Data, error: retry1Error, status: retry1Status } = await supabase
-        .from('submissions')
-        .insert([stringifiedPayload])
-        .select();
-      
-      if (!retry1Error) {
-        finalData = retry1Data;
-        finalError = null;
-        finalStatus = retry1Status;
-        logToFile(`[API] Fallback 1 SUCCESS.`);
-      } else {
-        logToFile(`[API] Fallback 1 failed: ${retry1Error.message}`);
-        
-        // Fallback 2: Try removing job-specific columns (in case they don't exist in DB)
-        logToFile(`[API] Fallback 2: Trying minimal payload (no job columns)...`);
-        const minimalPayload = {
-          name,
-          email,
-          product: String(product),
-          mbti: String(results.mbti),
-          results: typeof results === 'object' ? JSON.stringify(results) : results,
-          answers: typeof answers === 'object' ? JSON.stringify(answers) : answers,
-          report_url: null
-        };
-        
-        const { data: retry2Data, error: retry2Error, status: retry2Status } = await supabase
-          .from('submissions')
-          .insert([minimalPayload])
-          .select();
-          
-        if (!retry2Error) {
-          finalData = retry2Data;
-          finalError = null;
-          finalStatus = retry2Status;
-          logToFile(`[API] Fallback 2 SUCCESS.`);
-        } else {
-          logToFile(`[API] Fallback 2 failed: ${retry2Error.message}`);
-          finalError = retry2Error;
-          finalStatus = retry2Status;
-        }
-      }
-    }
+    const { data: finalData, error: finalError, status: finalStatus } = await supabase
+      .from('submissions').insert([payload]).select();
 
    if (finalError) {
       logToFile(`[API] INSERT ERROR: ${finalError.message} (Code: ${finalError.code})`);
@@ -349,47 +327,11 @@ app.post("/api/submit", async (req, res) => {
     const submissionId = finalData[0].id;
     logToFile(`[API] INSERT SUCCESS: ID ${submissionId}`);
 
-    // 4. Trigger report generation (Attempt fast generation during submission)
-    let initialReportUrl = null;
-    try {
-      logToFile(`[API] Triggering initial report generation for ID ${submissionId}...`);
-      const generatePromise = (async () => {
-        const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
-        let reportPath;
-        if (product === 'comprehensive' || product === 'recruiter') {
-          const jobData = {
-            jobTitle: req.body.jobTitle,
-            jobEnvironment: req.body.jobEnvironment,
-            jobChallenge: req.body.jobChallenge,
-            jobDescription: req.body.jobDescription
-          };
-          reportPath = await generateComprehensiveReport(name, results, product === 'recruiter', jobData);
-        } else {
-          reportPath = await generateMBTIReport(name, results);
-        }
-        const reportUrl = `/api/reports/${path.basename(reportPath)}`;
-        const supabase = getSupabase(true);
-        await supabase.from('submissions').update({ report_url: reportUrl }).eq('id', submissionId);
-        return reportUrl;
-      })();
+    // Reports are generated only after payment confirmation. Creating a report
+    // or a report URL here would make a paid deliverable exist while payment is pending.
+    logToFile(`[API] Submission ${submissionId} saved with payment status ${payload.payment_status}; report generation deferred until payment is confirmed.`);
 
-      // Wait up to 7 seconds for the report to generate. 
-      // This is enough for most reports but short enough to avoid Vercel's 10s timeout.
-      initialReportUrl = await Promise.race([
-        generatePromise,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 7000))
-      ]);
-      
-      if (initialReportUrl) {
-        logToFile(`[API] Initial report generated successfully: ${initialReportUrl}`);
-      } else {
-        logToFile(`[API] Initial report generation timed out. Admin will need to generate in dashboard.`);
-      }
-    } catch (genErr: any) {
-      logToFile(`[API] Initial generation error: ${genErr.message}`);
-    }
-
-    // 5. Send fast notification to admin
+    // 4. Send fast notification to admin
     try {
       logToFile(`[API] Sending notification for ID ${submissionId}...`);
       const adminEmail = process.env.ADMIN_EMAIL || "tomknsn@gmail.com";
@@ -404,9 +346,7 @@ Email: ${email}
 Type: ${results.mbti}
 Product: ${product}
 
-${initialReportUrl 
-  ? `REPORT GENERATED: https://${process.env.VERCEL_URL || req.headers.host}${initialReportUrl}` 
-  : `REPORT PENDING: PDF generation timed out during submission. Please generate it in the Admin Dashboard.`}
+REPORT PENDING: Generate and release the report only after payment verification.
 
 Admin Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/result/${submissionId}` : `Check Admin Dashboard for ID ${submissionId}`}
 
@@ -422,12 +362,90 @@ Admin Link: ${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/admin/
       logToFile(`[API] Admin notification error: ${emailErr.message}`);
     }
 
-    return res.json({ status: "ok", id: submissionId });
+    return res.json({ status: "ok", id: submissionId, checkoutToken, paymentStatus: payload.payment_status });
   } catch (error: any) {
     logToFile(`[API] CRITICAL ERROR: ${error.message}`);
     if (!res.headersSent) {
       res.status(500).json({ error: "Internal server error", message: error.message });
     }
+  }
+});
+
+app.post('/api/yoco/create-checkout', async (req, res) => {
+  const { submissionId, checkoutToken } = req.body || {};
+  if (!submissionId || typeof checkoutToken !== 'string') return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Payment session is required.' });
+  try {
+    const supabase = getSupabase(true);
+    const { data: submission, error } = await supabase.from('submissions')
+      .select('id,product,payment_status,payment_ref,payment_token_hash,payment_amount_cents,payment_currency,yoco_checkout_id')
+      .eq('id', submissionId).single();
+    if (error || !submission || !submission.payment_token_hash || !constantTimeEqual(sha256(checkoutToken), submission.payment_token_hash)) {
+      return res.status(403).json({ error: 'INVALID_PAYMENT_SESSION', message: 'Payment session is invalid.' });
+    }
+    const product = getPaymentProduct(submission.product);
+    if (!product || submission.payment_amount_cents !== product.amountCents || submission.payment_currency !== product.currency || !submission.payment_ref) {
+      logToFile(`[API] Payment configuration mismatch for submission ${submission.id}`);
+      return res.status(409).json({ error: 'PAYMENT_CONFIGURATION_MISMATCH', message: 'Payment configuration requires review.' });
+    }
+    if (submission.payment_status === 'paid') return res.json({ status: 'paid' });
+    if (product.amountCents === 0) {
+      await supabase.from('submissions').update({ payment_status: 'paid', payment_provider: 'complimentary', paid_at: new Date().toISOString() })
+        .eq('id', submission.id).neq('payment_status', 'paid');
+      return res.json({ status: 'paid' });
+    }
+    const secret = process.env.YOCO_SECRET_KEY;
+    if (!secret) return res.status(503).json({ error: 'PAYMENT_UNAVAILABLE', message: 'Online payment is not configured.' });
+    const origin = publicOrigin();
+    const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json', 'Idempotency-Key': submission.payment_ref },
+      body: JSON.stringify({
+        amount: product.amountCents, currency: product.currency,
+        successUrl: `${origin}/thank-you?payment=success`, cancelUrl: `${origin}/thank-you?payment=cancelled`, failureUrl: `${origin}/thank-you?payment=failed`,
+        clientReferenceId: submission.payment_ref, externalId: submission.payment_ref,
+        metadata: { submissionId: String(submission.id), paymentRef: submission.payment_ref, product: product.key }
+      })
+    });
+    const checkout = await yocoResponse.json().catch(() => null);
+    if (!yocoResponse.ok || !checkout?.id || !checkout?.redirectUrl) {
+      logToFile(`[API] Yoco checkout creation failed for submission ${submission.id}: ${yocoResponse.status}`);
+      return res.status(502).json({ error: 'CHECKOUT_CREATION_FAILED', message: 'Unable to create secure checkout.' });
+    }
+    const { error: updateError } = await supabase.from('submissions').update({ yoco_checkout_id: checkout.id, payment_status: 'checkout_created', payment_provider: 'yoco' })
+      .eq('id', submission.id).neq('payment_status', 'paid');
+    if (updateError) throw updateError;
+    return res.json({ status: 'checkout_created', redirectUrl: checkout.redirectUrl });
+  } catch (err: any) {
+    logToFile(`[API] Checkout error: ${err.message}`);
+    return res.status(500).json({ error: 'CHECKOUT_ERROR', message: 'Unable to start checkout.' });
+  }
+});
+
+app.post('/api/yoco/webhook', async (req, res) => {
+  if (!verifyYocoWebhook(req)) return res.status(403).json({ error: 'INVALID_WEBHOOK_SIGNATURE' });
+  try {
+    const event = JSON.parse((req.body as Buffer).toString('utf8'));
+    if (event?.type !== 'payment.succeeded' || event?.payload?.status !== 'succeeded') return res.sendStatus(200);
+    const checkoutId = event.payload?.metadata?.checkoutId;
+    const paymentId = event.payload?.id;
+    if (!checkoutId || !paymentId) return res.status(400).json({ error: 'INVALID_PAYMENT_EVENT' });
+    const supabase = getSupabase(true);
+    const { data: submission, error } = await supabase.from('submissions')
+      .select('id,payment_status,payment_amount_cents,payment_currency,yoco_payment_id')
+      .eq('yoco_checkout_id', checkoutId).single();
+    if (error || !submission) return res.status(404).json({ error: 'UNKNOWN_CHECKOUT' });
+    if (submission.payment_status === 'paid') return res.sendStatus(200);
+    if (submission.payment_amount_cents !== event.payload.amount || submission.payment_currency !== event.payload.currency) {
+      logToFile(`[API] Yoco amount/currency mismatch for checkout ${checkoutId}`);
+      return res.status(422).json({ error: 'PAYMENT_MISMATCH' });
+    }
+    const { error: updateError } = await supabase.from('submissions').update({ payment_status: 'paid', payment_provider: 'yoco', yoco_payment_id: paymentId, paid_at: new Date().toISOString() })
+      .eq('id', submission.id).neq('payment_status', 'paid');
+    if (updateError) throw updateError;
+    return res.sendStatus(200);
+  } catch (err: any) {
+    logToFile(`[API] Yoco webhook error: ${err.message}`);
+    return res.status(500).json({ error: 'WEBHOOK_PROCESSING_FAILED' });
   }
 });
 
@@ -444,6 +462,14 @@ app.post("/api/admin/generate-report", requireAdminAuth, async (req, res) => {
     if (subError || !sub) {
       logToFile(`[API] ERROR: Submission ${id} not found for generation`);
       return res.status(404).json({ error: "Submission not found" });
+    }
+
+    if (sub.payment_status !== 'paid') {
+      logToFile(`[API] BLOCKED generate-report for ID ${id}: payment_status is not paid.`);
+      return res.status(403).json({
+        error: "PAYMENT_NOT_CONFIRMED",
+        message: "A report can be generated only after payment is confirmed."
+      });
     }
     
     if (!sub.results) {
@@ -581,8 +607,9 @@ app.post("/api/admin/mark-paid", requireAdminAuth, async (req, res) => {
     const supabase = getSupabase(true);
     const { data, error } = await supabase
       .from('submissions')
-      .update({ payment_status: 'paid' })
+      .update({ payment_status: 'paid', payment_provider: 'manual_eft', paid_at: new Date().toISOString() })
       .eq('id', id)
+      .neq('payment_status', 'paid')
       .select();
 
     if (error) {
@@ -709,7 +736,34 @@ app.delete("/api/results/:id", requireAdminAuth, async (req, res) => {
 });
 
 app.get("/api/reports/:filename", async (req, res) => {
-  const { filename } = req.params;
+  const requestedFilename = req.params.filename;
+  const filename = path.basename(requestedFilename);
+  if (filename !== requestedFilename || !filename.toLowerCase().endsWith('.pdf')) {
+    return res.status(400).send('Invalid report filename.');
+  }
+
+  // Resolve the report record and enforce the payment gate before touching the
+  // filesystem. Report URLs are deliberately not customer credentials.
+  const reportUrl = `/api/reports/${filename}`;
+  let sub: any;
+  try {
+    const supabase = getSupabase(true);
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('report_url', reportUrl)
+      .single();
+    if (error || !data) return res.status(404).send('Report not found.');
+    if (data.payment_status !== 'paid') {
+      logToFile(`[API] BLOCKED report download for submission ${data.id}: payment_status is not paid.`);
+      return res.status(403).send('Payment has not been confirmed.');
+    }
+    sub = data;
+  } catch (err: any) {
+    logToFile(`[API] Report authorization lookup failed for ${filename}: ${err.message}`);
+    return res.status(500).send('Unable to authorize report access.');
+  }
+
   const reportsDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
   const filePath = path.join(reportsDir, filename);
   
@@ -720,19 +774,6 @@ app.get("/api/reports/:filename", async (req, res) => {
   // If file is missing, try to re-generate it on the fly
   logToFile(`[API] Report ${filename} missing from disk. Attempting on-demand regeneration...`);
   try {
-    const supabase = getSupabase(true);
-    // Search for submission that has this filename in its report_url
-    const { data: sub, error: subError } = await supabase
-      .from('submissions')
-      .select('*')
-      .ilike('report_url', `%${filename}%`)
-      .single();
-
-    if (subError || !sub) {
-      logToFile(`[API] Could not find submission for missing report ${filename}`);
-      return res.status(404).send('Report not found and could not be re-generated.');
-    }
-
     logToFile(`[API] Found submission ${sub.id} for missing report. Re-generating...`);
     const { generateMBTIReport, generateComprehensiveReport } = await getReportServices();
     const results = typeof sub.results === 'string' ? JSON.parse(sub.results) : sub.results;
@@ -758,7 +799,7 @@ app.get("/api/reports/:filename", async (req, res) => {
     
     if (newFilename !== filename) {
       logToFile(`[API] Filename changed during regen: ${filename} -> ${newFilename}. Updating DB.`);
-      await supabase.from('submissions').update({ report_url: newReportUrl }).eq('id', sub.id);
+      await getSupabase(true).from('submissions').update({ report_url: newReportUrl }).eq('id', sub.id);
     }
 
     if (fs.existsSync(reportPath)) {
