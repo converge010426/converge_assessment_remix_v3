@@ -6,3 +6,5 @@ node_modules/
 dist/
 api-debug.log
 *.patch
+
+reports/
