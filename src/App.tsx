@@ -146,6 +146,19 @@ export default function App() {
     console.log('- Current Hostname:', window.location.hostname);
   }, []);
 
+  // If every question already has an answer (the customer already completed the
+  // questionnaire once) and they then switch products, jump straight to the final
+  // question so SUBMIT is immediately available - without touching `answers` and
+  // without requiring them to click back through already-answered questions.
+  // On a fresh/first-time run `answers` is empty, so this has no effect and normal
+  // first-time behaviour (starting at question 1) is unchanged.
+  React.useEffect(() => {
+    const allAnswered = questions.length > 0 && questions.every(q => answers[q.id] !== undefined);
+    if (allAnswered) {
+      setCurrentQuestionIndex(questions.length - 1);
+    }
+  }, [selectedProduct]);
+
   const handleAnswer = (value: number) => {
     const q = questions[currentQuestionIndex];
     setAnswers(prev => ({ ...prev, [q.id]: value }));

@@ -269,7 +269,17 @@ app.post("/api/submit", async (req, res) => {
   if (!name || !email || !results) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  const paymentProduct = getPaymentProduct(product);
+
+  let paymentProduct: ReturnType<typeof getPaymentProduct>;
+  try {
+    paymentProduct = getPaymentProduct(product);
+  } catch (configErr: any) {
+    logToFile(`[API] CONFIGURATION_ERROR resolving payment product for "${product}": ${configErr.message}`);
+    return res.status(500).json({
+      error: "CONFIGURATION_ERROR",
+      message: "Pricing configuration could not be loaded. Please try again shortly, or contact support if this persists."
+    });
+  }
   if (!paymentProduct) return res.status(400).json({ error: "INVALID_PRODUCT", message: "Unknown assessment product." });
 
   try {
