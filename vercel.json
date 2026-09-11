@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "src/**"
+      "includeFiles": "{src/**,CONVERGE_SETTINGS.json}"
     }
   },
   "rewrites": [

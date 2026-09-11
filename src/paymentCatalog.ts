@@ -1,14 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 export type ProductKey = 'mbti' | 'comprehensive' | 'recruiter';
 
 type ProductConfig = { name: string; price: string; description: string };
 type PricingSettings = { PRICING: { products: Record<ProductKey, ProductConfig>; currency: string } };
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Loaded lazily (on first actual use) rather than as a static top-level import.
 // A static `import settings from '../CONVERGE_SETTINGS.json'` runs at module
@@ -23,7 +19,9 @@ let cachedSettings: PricingSettings | null = null;
 
 function loadSettings(): PricingSettings {
   if (cachedSettings) return cachedSettings;
-  const settingsPath = path.join(__dirname, '..', 'CONVERGE_SETTINGS.json');
+  // Vercel packages the explicitly included configuration file at the
+  // Function's working root. This also resolves to the project root locally.
+  const settingsPath = path.join(process.cwd(), 'CONVERGE_SETTINGS.json');
   const raw = fs.readFileSync(settingsPath, 'utf-8');
   cachedSettings = JSON.parse(raw) as PricingSettings;
   return cachedSettings;
