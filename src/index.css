@@ -31,6 +31,15 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
+/* Current CONVERGE hero: replace the legacy embedded-price artwork without
+   changing the existing landing-page component structure. */
+.page-container > img[src="/converge-hero.png"] {
+  content: url('/converge-hero-clean.svg');
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .section-label {
   @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30;
 }
