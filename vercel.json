@@ -3,15 +3,9 @@
   "functions": {
     "api/index.ts": {
       "includeFiles": "{src/**,CONVERGE_SETTINGS.json}"
-    },
-    "api/pricing.ts": {
-      "includeFiles": "CONVERGE_SETTINGS.json"
     }
   },
   "rewrites": [
-    { "source": "/api/pricing", "destination": "/api/pricing.ts" },
-    { "source": "/api/admin/pricing", "destination": "/api/admin-pricing.ts" },
-    { "source": "/admin/pricing", "destination": "/admin-pricing.html" },
     { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
