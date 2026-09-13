@@ -1,9 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSupabase } from '../src/lib/supabase.js';
 
 type ProductKey = 'mbti' | 'comprehensive' | 'recruiter';
 
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
+export default async function handler(_req: any, res: any) {
   try {
     const supabase = getSupabase(true);
     const { data: prices, error: priceError } = await supabase
