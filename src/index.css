@@ -4,7 +4,6 @@
 @theme {
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Montserrat", sans-serif;
-
   --color-navy: #1B2A4A;
   --color-gold: #c5a059;
   --color-gold-lt: #d4b47a;
@@ -17,9 +16,7 @@
 }
 
 @layer base {
-  body {
-    @apply bg-cream font-serif text-dark antialiased;
-  }
+  body { @apply bg-cream font-serif text-dark antialiased; }
 }
 
 .page-container {
@@ -31,21 +28,31 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
-/* Current CONVERGE hero: replace the legacy embedded-price artwork without
-   changing the existing landing-page component structure. */
+/* Landing hero: restore the original artwork and apply only the two agreed corrections:
+   remove pricing and replace Enneagram with EQ. The overlay is transparent everywhere else,
+   so the original artwork remains the visual master. */
 .page-container > img[src="/converge-hero.png"] {
-  content: url('/converge-hero-clean.svg');
   width: 100%;
   height: auto;
   display: block;
+  margin-bottom: 3rem;
+}
+
+.page-container > main::before {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  top: 64px;
+  left: 64px;
+  width: calc(100% - 128px);
+  aspect-ratio: 1536 / 1024;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1536 1024'%3E%3Cdefs%3E%3Cstyle%3E.w%7Bfont-family:Arial,Helvetica,sans-serif;fill:%23fff%7D.n%7Bfont-family:Arial,Helvetica,sans-serif;fill:%2311182f%7D%3C/style%3E%3C/defs%3E%3Crect x='494' y='322' width='451' height='154' fill='%235b2b98'/%3E%3Ccircle cx='604' cy='397' r='72' fill='%235b2b98' stroke='%23fff' stroke-width='8'/%3E%3Ctext x='604' y='412' text-anchor='middle' class='w' font-size='43' font-weight='700'%3EEQ%3C/text%3E%3Ctext x='701' y='370' class='w' font-size='36' font-weight='700'%3EEQ%3C/text%3E%3Ctext x='701' y='402' class='w' font-size='23'%3EHow you handle%3C/text%3E%3Ctext x='701' y='430' class='w' font-size='23'%3Ethe human dimension%3C/text%3E%3Crect x='505' y='583' width='292' height='99' fill='%23f6f6f7'/%3E%3Crect x='823' y='583' width='297' height='99' fill='%23f6f6f7'/%3E%3Crect x='1143' y='583' width='307' height='99' fill='%23f6f6f7'/%3E%3Crect x='823' y='681' width='297' height='93' fill='%23f6f6f7'/%3E%3Ctext x='971' y='709' text-anchor='middle' class='n' font-size='19'%3EA deeper integrated%3C/text%3E%3Ctext x='971' y='735' text-anchor='middle' class='n' font-size='19'%3Eanalysis of MBTI, EQ%3C/text%3E%3Ctext x='971' y='761' text-anchor='middle' class='n' font-size='19'%3E&amp;amp; Big Five.%3C/text%3E%3Crect x='0' y='862' width='704' height='152' fill='%23021f3a'/%3E%3Ctext x='72' y='910' class='w' font-size='27' font-weight='700' fill='%236abe46'%3ETHREE PERSPECTIVES.%3C/text%3E%3Ctext x='72' y='948' class='w' font-size='21'%3EOne integrated view of how%3C/text%3E%3Ctext x='72' y='977' class='w' font-size='21'%3Eyou think, behave and relate.%3C/text%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
 }
 
 /* Thank-you page: make the Return Home instruction explicit without touching
    the large App.tsx route file. The direct child button is unique to this page. */
-.page-container main > button {
-  position: relative;
-}
-
+.page-container main > button { position: relative; }
 .page-container main > button::after {
   content: 'Want to explore more? Return Home to choose your next CONVERGE assessment.';
   display: block;
@@ -62,6 +69,8 @@
   white-space: normal;
 }
 
-.section-label {
-  @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30;
+.section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
+
+@media (max-width: 767px) {
+  .page-container > main::before { top: 32px; left: 32px; width: calc(100% - 64px); }
 }
