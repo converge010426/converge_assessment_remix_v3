@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CONVERGE — Price Settings</title>
+  <style>
+    :root { --navy:#1B2A4A; --gold:#c5a059; --cream:#fdfcf8; --warm:#f9f7f2; --grey:#4A4A4A; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--cream); color:#1A1A1A; font-family:Georgia,serif; }
+    .page { max-width:900px; min-height:100vh; margin:0 auto; padding:48px 64px; background:white; box-shadow:0 0 80px rgba(27,42,74,.12); border-left:5px solid var(--gold); }
+    header { display:flex; justify-content:space-between; align-items:end; gap:24px; padding-bottom:28px; border-bottom:1px solid rgba(197,160,89,.25); }
+    h1 { margin:0; color:var(--navy); font:700 24px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .sub { margin:8px 0 0; color:var(--grey); font:700 11px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    a { color:var(--navy); font:700 10px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .intro { margin:32px 0 24px; padding:20px; background:var(--warm); border-left:3px solid var(--gold); color:var(--navy); font:600 13px/1.6 Montserrat,Arial,sans-serif; }
+    .card { margin:16px 0; padding:24px; border:1px solid rgba(197,160,89,.2); background:white; }
+    .row { display:grid; grid-template-columns:1fr 170px 110px; gap:24px; align-items:center; }
+    .name { color:var(--navy); font:700 16px Montserrat,Arial,sans-serif; }
+    .key { margin-top:5px; color:var(--grey); font:9px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    label { display:block; color:var(--grey); font:700 9px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; margin-bottom:7px; }
+    input { width:100%; padding:12px; border:1px solid rgba(197,160,89,.3); background:var(--cream); color:var(--navy); font:700 15px Montserrat,Arial,sans-serif; outline:none; }
+    input:focus { border-color:var(--gold); }
+    button { width:100%; padding:12px 10px; border:0; background:var(--navy); color:white; font:700 9px Montserrat,Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+    button:hover { background:var(--gold); }
+    button:disabled { opacity:.5; cursor:wait; }
+    .status { min-height:20px; margin-top:24px; text-align:center; color:var(--grey); font:700 10px Montserrat,Arial,sans-serif; letter-spacing:1px; }
+    .source { margin-top:32px; padding-top:18px; border-top:1px solid rgba(197,160,89,.15); color:#777; font:9px/1.5 Montserrat,Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+    @media (max-width:700px) { .page{padding:32px 24px}.row{grid-template-columns:1fr}.row button{max-width:180px} header{align-items:start;flex-direction:column} }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Price Settings</h1>
+        <p class="sub">CONVERGE™ Administrator Control</p>
+      </div>
+      <a href="/admin">← Back to Dashboard</a>
+    </header>
+
+    <div class="intro">
+      These prices are intended to be the single persistent commercial price source for CONVERGE. Changes are administrator-only and are stored in Supabase, not in browser storage.
+    </div>
+
+    <div id="prices"><p class="status">Loading current prices…</p></div>
+    <div id="status" class="status"></div>
+    <div class="source">Authoritative source: Supabase • Historical payment amounts remain fixed on existing submissions.</div>
+  </div>
+
+  <script>
+    const labels = {
+      mbti: 'Converge 1: MBTI Basic',
+      comprehensive: 'Converge 2: Comprehensive',
+      recruiter: 'Converge 3: Recruiter All-in'
+    };
+    const token = localStorage.getItem('admin_token');
+    const prices = document.getElementById('prices');
+    const status = document.getElementById('status');
+
+    if (!token) {
+      prices.innerHTML = '<p class="status">Administrator session not found. Please log in first.</p>';
+    } else {
+      loadPrices();
+    }
+
+    async function loadPrices() {
+      try {
+        const res = await fetch('/api/admin/pricing', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        if (!res.ok) throw new Error('Unable to load pricing.');
+        const rows = await res.json();
+        prices.innerHTML = rows.map(row => `
+          <div class="card">
+            <div class="row">
+              <div><div class="name">${escapeHtml(labels[row.product_key] || row.name)}</div><div class="key">${escapeHtml(row.product_key)} • ${escapeHtml(row.currency)} • ${row.active ? 'Active' : 'Inactive'}</div></div>
+              <div><label for="price-${row.product_key}">Price (ZAR)</label><input id="price-${row.product_key}" type="number" min="0" step="1" value="${Math.round(row.price_cents / 100)}"></div>
+              <div><button onclick="savePrice('${row.product_key}')">Save Price</button></div>
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        prices.innerHTML = '<p class="status">Pricing could not be loaded. The Supabase pricing table may not yet be installed.</p>';
+      }
+    }
+
+    async function savePrice(product) {
+      const input = document.getElementById('price-' + product);
+      const value = Number(input.value);
+      if (!Number.isFinite(value) || value < 0) { status.textContent = 'Enter a valid non-negative price.'; return; }
+      status.textContent = 'Saving…';
+      try {
+        const res = await fetch('/api/admin/pricing', {
+          method: 'PUT',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product, price: value })
+        });
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed.');
+        status.textContent = 'Price saved successfully.';
+        await loadPrices();
+      } catch (err) {
+        status.textContent = err.message || 'Price could not be saved.';
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+  </script>
+</body>
+</html>
