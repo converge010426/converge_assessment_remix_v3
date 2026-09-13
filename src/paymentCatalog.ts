@@ -1,42 +1,85 @@
-import fs from 'fs';
-import path from 'path';
+import { getSupabase } from './lib/supabase.js';
 
 export type ProductKey = 'mbti' | 'comprehensive' | 'recruiter';
 
-type ProductConfig = { name: string; price: string; description: string };
-type PricingSettings = { PRICING: { products: Record<ProductKey, ProductConfig>; currency: string } };
+type ProductPriceRow = {
+  product_key: ProductKey;
+  display_name: string;
+  description: string | null;
+  base_amount_cents: number;
+  currency: string;
+  active: boolean;
+};
 
-// Loaded lazily (on first actual use) rather than as a static top-level import.
-// A static `import settings from '../CONVERGE_SETTINGS.json'` runs at module
-// initialization time, before any request handler exists to catch a failure -
-// if that ever failed to resolve in the deployed bundle, it would crash the
-// entire serverless function on cold start (FUNCTION_INVOCATION_FAILED), for
-// every route, not just this one. Loading it here, inside a function, means
-// any failure (missing file, unreadable, malformed JSON) surfaces as a normal
-// JS Error at the point of use, which the caller can catch and turn into a
-// controlled JSON error response instead.
-let cachedSettings: PricingSettings | null = null;
+type PromotionRow = {
+  id: number | string;
+  product_key: ProductKey;
+  override_amount_cents: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  active: boolean;
+  label: string | null;
+};
 
-function loadSettings(): PricingSettings {
-  if (cachedSettings) return cachedSettings;
-  // Vercel packages the explicitly included configuration file at the
-  // Function's working root. This also resolves to the project root locally.
-  const settingsPath = path.join(process.cwd(), 'CONVERGE_SETTINGS.json');
-  const raw = fs.readFileSync(settingsPath, 'utf-8');
-  cachedSettings = JSON.parse(raw) as PricingSettings;
-  return cachedSettings;
+const PRODUCT_KEYS: ProductKey[] = ['mbti', 'comprehensive', 'recruiter'];
+
+function isProductKey(value: unknown): value is ProductKey {
+  return PRODUCT_KEYS.includes(value as ProductKey);
 }
 
-function priceToCents(price: string): number {
-  const parsed = Number(price.replace(/[^0-9.]/g, ''));
-  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`Invalid configured price: ${price}`);
-  return Math.round(parsed * 100);
-}
+/**
+ * Supabase public.product_prices is the single authoritative pricing source.
+ * Promotions are effective only inside their configured date window; an old
+ * promotion left active in the database cannot accidentally remain effective.
+ */
+export async function getPaymentProduct(product: unknown) {
+  if (!isProductKey(product)) return null;
 
-export function getPaymentProduct(product: unknown) {
-  if (product !== 'mbti' && product !== 'comprehensive' && product !== 'recruiter') return null;
-  const settings = loadSettings();
-  const configured = settings.PRICING.products[product];
-  if (!configured) return null;
-  return { key: product, name: configured.name, currency: settings.PRICING.currency, amountCents: priceToCents(configured.price) };
+  const supabase = getSupabase(true);
+  const { data: price, error: priceError } = await supabase
+    .from('product_prices')
+    .select('product_key,display_name,description,base_amount_cents,currency,active')
+    .eq('product_key', product)
+    .eq('active', true)
+    .single();
+
+  if (priceError) {
+    throw new Error(`Unable to load authoritative price for ${product}: ${priceError.message}`);
+  }
+  if (!price) return null;
+
+  const typedPrice = price as ProductPriceRow;
+  const now = new Date().toISOString();
+  const { data: promotions, error: promotionError } = await supabase
+    .from('price_promotions')
+    .select('id,product_key,override_amount_cents,starts_at,ends_at,active,label')
+    .eq('product_key', product)
+    .eq('active', true)
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gt.${now}`)
+    .order('starts_at', { ascending: false });
+
+  if (promotionError) {
+    throw new Error(`Unable to load pricing promotions for ${product}: ${promotionError.message}`);
+  }
+
+  const effectivePromotion = ((promotions || []) as PromotionRow[]).find((promotion) => {
+    const startsOk = !promotion.starts_at || new Date(promotion.starts_at).getTime() <= Date.now();
+    const endsOk = !promotion.ends_at || new Date(promotion.ends_at).getTime() > Date.now();
+    return promotion.active && startsOk && endsOk;
+  });
+
+  const amountCents = effectivePromotion
+    ? Math.max(0, Math.round(effectivePromotion.override_amount_cents))
+    : Math.max(0, Math.round(typedPrice.base_amount_cents));
+
+  return {
+    key: typedPrice.product_key,
+    name: typedPrice.display_name,
+    description: typedPrice.description || '',
+    currency: typedPrice.currency,
+    amountCents,
+    promotionId: effectivePromotion?.id ?? null,
+    promotionLabel: effectivePromotion?.label ?? null,
+  };
 }
