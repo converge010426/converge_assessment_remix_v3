@@ -40,6 +40,28 @@
   display: block;
 }
 
+/* Thank-you page: make the Return Home instruction explicit without touching
+   the large App.tsx route file. The direct child button is unique to this page. */
+.page-container main > button {
+  position: relative;
+}
+
+.page-container main > button::after {
+  content: 'Want to explore more? Return Home to choose your next CONVERGE assessment.';
+  display: block;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(197, 160, 89, 0.35);
+  color: #4A4A4A;
+  font-family: "Montserrat", sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  line-height: 1.6;
+  text-transform: none;
+  white-space: normal;
+}
+
 .section-label {
   @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30;
 }
