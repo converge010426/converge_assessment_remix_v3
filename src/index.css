@@ -28,9 +28,10 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
-/* Landing hero: restore the original artwork and apply only the two agreed corrections:
-   remove pricing and replace Enneagram with EQ. The overlay is transparent everywhere else,
-   so the original artwork remains the visual master. */
+/* LANDING PAGE ONLY.
+   The hero correction overlay must NEVER attach to the generic <main> used by
+   questionnaire, thank-you, privacy, terms, support, or other secondary pages.
+   The landing page is uniquely identified by the hero image as a direct child. */
 .page-container > img[src="/converge-hero.png"] {
   width: 100%;
   height: auto;
@@ -38,7 +39,7 @@
   margin-bottom: 3rem;
 }
 
-.page-container > main::before {
+.page-container:has(> img[src="/converge-hero.png"]) > main::before {
   content: '';
   position: absolute;
   z-index: 5;
@@ -72,5 +73,5 @@
 .section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
 
 @media (max-width: 767px) {
-  .page-container > main::before { top: 32px; left: 32px; width: calc(100% - 64px); }
+  .page-container:has(> img[src="/converge-hero.png"]) > main::before { top: 32px; left: 32px; width: calc(100% - 64px); }
 }
