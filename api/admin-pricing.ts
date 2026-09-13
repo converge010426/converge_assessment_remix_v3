@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import { getSupabase } from '../src/lib/supabase.js';
 
@@ -24,7 +23,7 @@ function verifyAdminToken(token: string | undefined): boolean {
   }
 }
 
-function requireAdmin(req: VercelRequest, res: VercelResponse) {
+function requireAdmin(req: any, res: any) {
   const header = String(req.headers.authorization || '');
   const token = header.startsWith('Bearer ') ? header.slice(7) : undefined;
   if (!verifyAdminToken(token)) {
@@ -34,12 +33,10 @@ function requireAdmin(req: VercelRequest, res: VercelResponse) {
   return true;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (!requireAdmin(req, res)) return;
-
   try {
     const supabase = getSupabase(true);
-
     if (req.method === 'GET') {
       const { data, error } = await supabase
         .from('product_prices')
@@ -49,7 +46,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
       return res.status(200).json({ products: data || [] });
     }
-
     if (req.method === 'PATCH') {
       const body = req.body || {};
       const productKey = body.productKey as ProductKey;
@@ -57,7 +53,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!PRODUCT_KEYS.includes(productKey) || !Number.isInteger(amountCents) || amountCents < 0 || amountCents > 100000000) {
         return res.status(400).json({ error: 'INVALID_PRICE', message: 'Provide a valid product and non-negative whole-number amount in cents.' });
       }
-
       const { data, error } = await supabase
         .from('product_prices')
         .update({ base_amount_cents: amountCents, updated_at: new Date().toISOString() })
@@ -67,7 +62,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
       return res.status(200).json({ product: data });
     }
-
     res.setHeader('Allow', 'GET, PATCH');
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   } catch (error: any) {
