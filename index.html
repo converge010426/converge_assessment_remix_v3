@@ -8,6 +8,25 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        function addPricingLink() {
+          if (window.location.pathname !== '/admin' || document.getElementById('converge-pricing-link')) return;
+          var header = document.querySelector('.page-container > header');
+          if (!header) return;
+          var link = document.createElement('a');
+          link.id = 'converge-pricing-link';
+          link.href = '/admin-pricing.html';
+          link.textContent = 'PRICE SETTINGS';
+          link.style.cssText = 'display:inline-block;margin-left:20px;padding:9px 14px;background:#0b1f33;color:#fff;text-decoration:none;font:700 10px Montserrat,sans-serif;letter-spacing:2px;text-transform:uppercase;';
+          header.appendChild(link);
+        }
+        var observer = new MutationObserver(addPricingLink);
+        observer.observe(document.body, { childList: true, subtree: true });
+        addPricingLink();
+        setTimeout(addPricingLink, 500);
+        setTimeout(addPricingLink, 1500);
+      })();
+    </script>
   </body>
 </html>
-
