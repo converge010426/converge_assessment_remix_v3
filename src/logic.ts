@@ -11,10 +11,6 @@ export interface AssessmentResults {
   evidence: { responseConsistency: number; answeredCount: number; expectedCount: number; constructSpread: Record<string, number> };
 }
 
-const MBTI_PAIRS: Array<[QuestionDimension, QuestionDimension, keyof MBTIStrengths]> = [
-  ['E', 'I', 'EI'], ['S', 'N', 'SN'], ['T', 'F', 'TF'], ['J', 'P', 'JP']
-];
-
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 const scale = (average: number) => clamp(((average - 1) / 4) * 100);
 
@@ -46,8 +42,11 @@ export function calculateResults(answers: Record<number, number>): AssessmentRes
       constructSpread[key] = Math.sqrt(variance);
     } else constructSpread[key] = 0;
   });
+
   const answeredCount = Object.keys(answers).filter((id) => questions.some((q) => q.id === Number(id))).length;
-  const responseConsistency = clamp(100 - Object.values(constructSpread).reduce((a, b) => a + b, 0) / Math.max(1, Object.values(constructSpread).length) * 28);
+  // This is deliberately a completion/evidence-coverage signal, not a claim that
+  // low answer variance or agreement proves response consistency.
+  const responseConsistency = clamp((answeredCount / questions.length) * 100);
 
   return {
     mbti,
@@ -66,12 +65,7 @@ export function calculateResults(answers: Record<number, number>): AssessmentRes
       empathy: scale(avg('EI_EM')),
       socialSkills: scale(avg('EI_SS')),
     },
-    evidence: {
-      responseConsistency,
-      answeredCount,
-      expectedCount: questions.length,
-      constructSpread,
-    },
+    evidence: { responseConsistency, answeredCount, expectedCount: questions.length, constructSpread },
   };
 }
 
