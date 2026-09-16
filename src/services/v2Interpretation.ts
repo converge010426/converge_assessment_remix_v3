@@ -72,8 +72,8 @@ export function frameworkSummary(results: AssessmentResults): Insight[] {
 }
 
 export function mbtiPreferenceText(results: AssessmentResults): string {
-  const s = results.mbtiStrengths;
-  if (!s) return `The MBTI result is ${results.mbti}.`;
+  const s = results.mbtiStrengths ?? results.ei?._v2Meta?.mbtiStrengths;
+  if (!s) return `The MBTI result is ${results.mbti}. Preference strength data was not retained in this submission record, so the four-letter result is presented without a strength claim.`;
   const entries: Array<[string, number]> = [
     [`${results.mbti[0]} preference`, s.EI], [`${results.mbti[1]} preference`, s.SN], [`${results.mbti[2]} preference`, s.TF], [`${results.mbti[3]} preference`, s.JP],
   ];
