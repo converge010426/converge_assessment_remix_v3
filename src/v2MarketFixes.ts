@@ -73,19 +73,6 @@ function replaceText(root: ParentNode, oldText: string, newText: string): void {
   });
 }
 
-function addLandingHeroCorrection(): void {
-  const image = document.querySelector<HTMLImageElement>('.page-container > img[src="/converge-hero.png"]');
-  if (!image || image.parentElement?.querySelector('[data-converge-hero-v2]')) return;
-  const parent = image.parentElement;
-  if (!parent) return;
-  parent.style.position = 'relative';
-  const correction = document.createElement('div');
-  correction.dataset.convergeHeroV2 = 'true';
-  correction.style.cssText = 'position:absolute;left:1.7%;top:49.7%;width:28.8%;height:7.8%;box-sizing:border-box;background:#f7f7f5;padding:5px 7px;display:flex;align-items:center;gap:7px;z-index:3;pointer-events:none;font-family:Arial,sans-serif;color:#111;font-weight:800;font-size:clamp(8px,1.15vw,17px);line-height:1.05;';
-  correction.innerHTML = '<span style="color:#5a9b45;font-size:1.15em">●</span><span>76 QUESTION QUESTIONNAIRE</span>';
-  parent.appendChild(correction);
-}
-
 function addContactBox(container: Element, variant: 'landing' | 'quiz'): void {
   if (container.querySelector('[data-converge-contact-box]')) return;
   const box = document.createElement('section');
@@ -114,7 +101,6 @@ function addContactBox(container: Element, variant: 'landing' | 'quiz'): void {
 function applyV2PresentationFixes(): void {
   const path = window.location.pathname;
   if (path === '/') {
-    addLandingHeroCorrection();
     replaceText(document, 'A verified psychological architecture, built from three validated frameworks.', 'A psychological architecture drawing on three well-established perspectives.');
     replaceText(document, 'Three Validated Frameworks', 'Three Well-Established Perspectives');
     replaceText(document, 'Validated frameworks, one profile', 'Well-established perspectives, one profile');
@@ -126,10 +112,6 @@ function applyV2PresentationFixes(): void {
   }
 
   if (path === '/quiz') {
-    replaceText(document, 'Three validated frameworks. One evidence-based hiring insight.', 'Drawing on three well-established perspectives: MBTI, EQ and Big Five.');
-    replaceText(document, 'Three platforms. One integrated psychological insight.', 'Three perspectives. One integrated profile.');
-    replaceText(document, 'Three frameworks. One executive advantage.', '76 questions. Under 10 minutes.');
-    replaceText(document, 'Three developmental platforms. One transformational growth tool.', "No right or wrong answers. Don't overthink it.");
     const main = document.querySelector('.page-container main');
     if (main) addContactBox(main, 'quiz');
   }
