@@ -8,7 +8,6 @@ import { CONVERGE_BADGE_PNG_BASE64, CONVERGE_BADGE_ASPECT_RATIO } from '../asset
 
 const BADGE = Buffer.from(CONVERGE_BADGE_PNG_BASE64, 'base64');
 const COLORS = { navy: '#1a2b4b', gold: '#c5a059', dark: '#111111', grey: '#444444', light: '#f9f7f2' };
-const PAGE = { left: 50, width: 495, bottom: 730 };
 
 function prepareReport(name: string, prefix: string) {
   const dir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
@@ -105,13 +104,17 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   doc.y += 142;
   para(doc, info.description, 11.4);
   sub(doc, 'Your Four Preference Dimensions');
+
+  // Keep all four preference cards on one fixed row. PDFKit text calls must not
+  // move doc.y between cards or later cards can spill onto new pages.
+  const cardY = doc.y;
   labels.forEach((label, i) => {
     const x = 50 + i * 128;
-    const y = doc.y;
-    doc.rect(x, y, 110, 74).fill(COLORS.light);
-    doc.fillColor(COLORS.navy).font('Helvetica-BoldOblique').fontSize(25).text(results.mbti[i], x + 18, y + 10);
-    doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(7.2).text(label.toUpperCase(), x + 18, y + 47, { width: 82, characterSpacing: 0.4 });
+    doc.rect(x, cardY, 110, 74).fill(COLORS.light);
+    doc.fillColor(COLORS.navy).font('Helvetica-BoldOblique').fontSize(25).text(results.mbti[i], x + 18, cardY + 10);
+    doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(7.2).text(label.toUpperCase(), x + 18, cardY + 47, { width: 82, characterSpacing: 0.4 });
   });
+  doc.y = cardY + 94;
 
   doc.addPage(); header(doc); title(doc, 'Preference Strength & Integrated Pattern');
   para(doc, mbtiPreferenceText(results));
@@ -139,27 +142,27 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   const insights = frameworkSummary(results);
   const b = results.bigFive, e = results.ei;
 
-  // PAGE 1 — COVER
+  // PAGE 1 — COVER. All cover elements use fixed coordinates so a long
+  // candidate name or wrapped paragraph cannot push the next page onto page 2.
   header(doc); title(doc, 'Comprehensive Personality Assessment');
-  para(doc, 'CONVERGE brings together three distinct perspectives to provide a broader, more individualised view of how you tend to think, behave and relate. The report should be read as an integrated pattern, not as three unrelated scores.', 11);
-  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9).text('PREPARED FOR', 50, doc.y + 8, { characterSpacing: 1.5 });
-  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(27).text(name.toUpperCase(), 50, doc.y + 24);
-  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9).text('ASSESSMENT DATE', 50, doc.y + 76, { characterSpacing: 1.5 });
-  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(13).text(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), 50, doc.y + 93);
-  doc.y += 145;
-  doc.rect(50, doc.y, 495, 105).fill(COLORS.light);
-  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(44).text(results.mbti, 70, doc.y + 23);
-  doc.fillColor(COLORS.gold).font('Helvetica-BoldOblique').fontSize(16).text(`${info.title} • ${info.subtitle}`, 180, doc.y + 35, { width: 340 });
-  doc.y += 132;
-  para(doc, 'MBTI describes preferences. Big Five describes broad trait tendencies. Emotional Intelligence describes emotional and interpersonal capacities. The value of CONVERGE comes from considering the evidence together.', 11);
+  para(doc, 'CONVERGE brings together three distinct perspectives to provide a broader, more individualised view of how you tend to think, behave and relate. The report should be read as an integrated pattern, not as three unrelated scores.', 10.7);
+  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9).text('PREPARED FOR', 50, 250, { characterSpacing: 1.5 });
+  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(27).text(name.toUpperCase(), 50, 268, { width: 495 });
+  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9).text('ASSESSMENT DATE', 50, 318, { characterSpacing: 1.5 });
+  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(13).text(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), 50, 336);
+  doc.rect(50, 390, 495, 105).fill(COLORS.light);
+  doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(44).text(results.mbti, 70, 413);
+  doc.fillColor(COLORS.gold).font('Helvetica-BoldOblique').fontSize(16).text(`${info.title} • ${info.subtitle}`, 180, 425, { width: 340 });
+  paraAt(doc, 'MBTI describes preferences. Big Five describes broad trait tendencies. Emotional Intelligence describes emotional and interpersonal capacities. The value of CONVERGE comes from considering the evidence together.', 10.6, 525);
 
   // PAGE 2 — INTEGRATED PROFILE
   doc.addPage(); header(doc); title(doc, 'Your Integrated CONVERGE Profile');
   para(doc, mbtiPreferenceText(results), 10.9);
   insights.forEach((item) => insight(doc, item));
   sub(doc, 'Response Evidence');
-  const consistency = results.evidence?.responseConsistency ?? 0;
-  para(doc, `The assessment contains ${results.evidence?.expectedCount ?? 76} measurement items. The current response-consistency indicator is ${consistency}/100. This is an interpretive signal, not a validity certificate or a pass/fail judgement.`, 10.3);
+  const expected = results.evidence?.expectedCount ?? 76;
+  const answered = results.evidence?.answeredCount ?? expected;
+  para(doc, `RESPONSE EVIDENCE: ${answered} of ${expected} assessment questions were answered. This confirms completion of the assessment; it is not a validity certificate or a measure of psychological consistency.`, 10.3);
 
   // PAGE 3 — BIG FIVE
   doc.addPage(); header(doc); title(doc, 'Big Five Personality Traits');
@@ -189,19 +192,22 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   sub(doc, 'What the Results Suggest');
   insights.slice(0, 5).forEach((item) => insight(doc, item));
   sub(doc, 'Practical Development');
-  const development = developmentActions(results);
-  development.forEach((item) => bullet(doc, item));
+  developmentActions(results).forEach((item) => bullet(doc, item));
   sub(doc, 'Important Context');
   para(doc, 'CONVERGE is designed to identify useful patterns for reflection and development. The strongest use of the report is to compare these indicators with lived experience, feedback from others and real situations. A result should invite useful questions, not replace judgement.', 10.7);
 
   return finish(doc, stream, filePath);
 }
 
+function paraAt(doc: PDFKit.PDFDocument, text: string, size: number, y: number): void {
+  doc.fillColor(COLORS.dark).font('Helvetica').fontSize(size).text(text, 50, y, { width: 495, align: 'justify', lineGap: 4 });
+}
+
 function topTwo(e: AssessmentResults['ei']): Array<[string, number]> {
-  return Object.entries(e).map(([key, value]) => [eqLabel(key), value] as [string, number]).sort((a, b) => b[1] - a[1]).slice(0, 2);
+  return Object.entries(e).filter(([key, value]) => typeof value === 'number').map(([key, value]) => [eqLabel(key), value] as [string, number]).sort((a, b) => b[1] - a[1]).slice(0, 2);
 }
 function lowTwo(e: AssessmentResults['ei']): Array<[string, number]> {
-  return Object.entries(e).map(([key, value]) => [eqLabel(key), value] as [string, number]).sort((a, b) => a[1] - b[1]).slice(0, 2);
+  return Object.entries(e).filter(([key, value]) => typeof value === 'number').map(([key, value]) => [eqLabel(key), value] as [string, number]).sort((a, b) => a[1] - b[1]).slice(0, 2);
 }
 function eqLabel(key: string): string { return ({ selfAwareness: 'Self-Awareness', selfRegulation: 'Self-Regulation', motivation: 'Motivation', empathy: 'Empathy', socialSkills: 'Social Skills' } as Record<string, string>)[key] || key; }
 function developmentActions(r: AssessmentResults): string[] {
