@@ -42,13 +42,10 @@ function installSubmissionProtection(): void {
       if (!name || !email) {
         return new Response(JSON.stringify({
           error: 'MISSING_CANDIDATE_DETAILS',
-          message: 'Please enter your full name and email address before submitting.'
+          message: 'Please enter your full name and email address before submitting your assessment.'
         }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
 
-      // Recalculate from the submitted answers so the complete V2 result object,
-      // including preference-strength and response-evidence fields, cannot be lost
-      // by an intermediate frontend normalization step.
       const calculatedResults = body.answers ? calculateResults(body.answers) : body.results;
       const protectedBody = {
         ...body,
@@ -76,7 +73,7 @@ function replaceText(root: ParentNode, oldText: string, newText: string): void {
   });
 }
 
-function addLandingHeroV2Correction(): void {
+function addLandingHeroCorrection(): void {
   const image = document.querySelector<HTMLImageElement>('.page-container > img[src="/converge-hero.png"]');
   if (!image || image.parentElement?.querySelector('[data-converge-hero-v2]')) return;
   const parent = image.parentElement;
@@ -115,13 +112,9 @@ function addContactBox(container: Element, variant: 'landing' | 'quiz'): void {
 }
 
 function applyV2PresentationFixes(): void {
-  if (typeof document === 'undefined') return;
   const path = window.location.pathname;
-  const isLanding = path === '/';
-  const isQuiz = path === '/quiz';
-
-  if (isLanding) {
-    addLandingHeroV2Correction();
+  if (path === '/') {
+    addLandingHeroCorrection();
     replaceText(document, 'A verified psychological architecture, built from three validated frameworks.', 'A psychological architecture drawing on three well-established perspectives.');
     replaceText(document, 'Three Validated Frameworks', 'Three Well-Established Perspectives');
     replaceText(document, 'Validated frameworks, one profile', 'Well-established perspectives, one profile');
@@ -132,18 +125,11 @@ function applyV2PresentationFixes(): void {
     if (main) addContactBox(main, 'landing');
   }
 
-  if (isQuiz) {
+  if (path === '/quiz') {
     replaceText(document, 'Three validated frameworks. One evidence-based hiring insight.', 'Drawing on three well-established perspectives: MBTI, EQ and Big Five.');
     replaceText(document, 'Three platforms. One integrated psychological insight.', 'Three perspectives. One integrated profile.');
     replaceText(document, 'Three frameworks. One executive advantage.', '76 questions. Under 10 minutes.');
     replaceText(document, 'Three developmental platforms. One transformational growth tool.', "No right or wrong answers. Don't overthink it.");
-    const header = document.querySelector('header');
-    if (header) {
-      replaceText(header, 'Three platforms. One integrated psychological insight.', 'Three perspectives. One integrated profile.');
-      replaceText(header, 'Three validated frameworks. One evidence-based hiring insight.', 'Drawing on three well-established perspectives: MBTI, EQ and Big Five.');
-      replaceText(header, 'Three frameworks. One executive advantage.', '76 questions. Under 10 minutes.');
-      replaceText(header, 'Three developmental platforms. One transformational growth tool.', "No right or wrong answers. Don't overthink it.");
-    }
     const main = document.querySelector('.page-container main');
     if (main) addContactBox(main, 'quiz');
   }
@@ -152,7 +138,10 @@ function applyV2PresentationFixes(): void {
 export function installV2MarketFixes(): void {
   installSubmissionProtection();
   const run = () => applyV2PresentationFixes();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
-  const observer = new MutationObserver(() => run());
-  observer.observe(document.body, { childList: true, subtree: true });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
+  }
+  window.setTimeout(run, 100);
 }
