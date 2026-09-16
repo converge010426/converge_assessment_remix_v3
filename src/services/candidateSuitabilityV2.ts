@@ -193,7 +193,6 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   const challenge = safe(jobData.jobChallenge, 'the principal challenge supplied for the role');
   const description = safe(jobData.jobDescription, 'No additional role description was supplied.');
   const typeInfo = typeDescriptions[results.mbti];
-  // Eight competencies keep the page decision-focused and leave safe room for the interpretation below.
   const allComps = buildCompetencies(results);
   const family = roleFamily(jobData);
   const preferredKeys: Record<string, string[]> = {
@@ -210,7 +209,6 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   const interviewQs = interviewQuestions(jobData, comps);
   const recommendations = managementRecommendations(results, jobData);
 
-  // PAGE 1 — DECISION-ORIENTED COVER
   drawHeader(doc);
   doc.fillColor(COLORS.dark).font('Helvetica-Bold').fontSize(21).text('CANDIDATE SUITABILITY ASSESSMENT', 50, 125, { characterSpacing: 1.2 });
   doc.moveTo(50, 157).lineTo(545, 157).strokeColor(COLORS.gold).lineWidth(1).stroke();
@@ -228,9 +226,8 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(12).text('The purpose of this report', 50, 640);
   doc.fillColor(COLORS.dark).font('Helvetica').fontSize(10.5).text(`To help a recruiter or hiring manager turn the assessment into better questions, clearer role-fit discussion and more informed onboarding decisions for ${name} in relation to ${role}.`, 50, 665, { width: 495, lineGap: 4 });
 
-  // PAGE 2 — EXECUTIVE SUMMARY + PROFILE
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Executive Summary');
-  paragraph(doc, `${name} presents a ${results.mbti} pattern associated with ${typeInfo.strengths.slice(0, 2).join(' and ').toLowerCase()}. In relation to ${role}, the useful question is not whether the profile is inherently good or bad. It is how the candidate's natural tendencies interact with the actual demands, environment and challenge of the role. The current indicators point most strongly toward ${comps.slice().sort((a, b) => b.score - a.score).slice(0, 2).map(c => c.title.toLowerCase()).join(' and ')}, while the lower signals identify areas that deserve deliberate validation rather than assumptions.`, 11.4, 5);
+  paragraph(doc, `${name} presents an ${results.mbti} pattern associated with ${typeInfo.strengths.slice(0, 2).join(' and ').toLowerCase()}. In relation to ${role}, the useful question is not whether the profile is inherently good or bad. It is how the candidate's natural tendencies interact with the actual demands, environment and challenge of the role. The current indicators point most strongly toward ${comps.slice().sort((a, b) => b.score - a.score).slice(0, 2).map(c => c.title.toLowerCase()).join(' and ')}, while the lower signals identify areas that deserve deliberate validation rather than assumptions.`, 11.4, 5);
   paragraph(doc, 'The report therefore treats the assessment as a starting point for a better recruitment conversation. It translates the three current CONVERGE perspectives — MBTI, EQ and Big Five — into role-relevant competencies, likely strengths, structural support needs and interview questions.', 11.4, 5);
   subhead(doc, 'Role Context');
   const cardY = doc.y; card(doc, 50, cardY, 240, 82, 'ENVIRONMENT', environment); card(doc, 305, cardY, 240, 82, 'KEY CHALLENGE', challenge); doc.y = cardY + 103;
@@ -245,14 +242,12 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   ];
   profile.forEach(([label, value]) => { const rowY = doc.y; doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(8.4).text(label, 50, rowY, { width: 82 }); doc.fillColor(COLORS.dark).font('Helvetica').fontSize(10.2).text(value, 140, rowY, { width: 405 }); doc.y = rowY + 24; });
 
-  // PAGE 3 — COMPETENCY TRANSLATION
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Competency Translation');
   paragraph(doc, 'The following indicators translate the assessment into capabilities a recruiter can explore in a structured interview. They are deliberately presented as signals rather than promises: the strongest value comes from comparing them with evidence from the candidate’s actual experience.', 10.6, 4);
   comps.forEach(item => competencyBar(doc, item));
   subhead(doc, 'Reading the indicators');
   paragraph(doc, `A ${alignmentBand.toLowerCase()} across these indicators does not constitute a hiring decision. It means the assessment provides a coherent set of hypotheses for the interview. The recruiter should test the strongest signals for evidence of past performance and the weaker signals for context, compensating behaviours and development potential.`, 10.2, 4);
 
-  // PAGE 4 — ROLE FIT + STRUCTURAL SUPPORT
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Role Fit Analysis');
   paragraph(doc, roleFitParagraph(jobData, comps), 11.2, 5);
   subhead(doc, 'Where this profile may contribute strongly');
@@ -262,13 +257,11 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   subhead(doc, 'Important qualification');
   paragraph(doc, 'The current Big Five and EQ values are 0–100 assessment indicators derived from the questionnaire scoring model; they are not population percentiles. They should therefore not be presented as evidence that a candidate ranks at a particular percentile in the wider population. The report’s value is in the pattern across dimensions and its relevance to the specific role.', 9.9, 4);
 
-  // PAGE 5 — INTERVIEW QUESTIONS
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Recommended Interview Questions');
   paragraph(doc, `The strongest use of a Candidate Suitability report is not to make the interview shorter. It is to make the interview better. The questions below are designed around the profile, the role context and the areas most worth validating for ${role}.`, 10.8, 5);
   interviewQs.forEach((question, index) => { const qY = doc.y; doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(10).text(`${index + 1}`, 50, qY, { width: 20 }); const opts = { width: 467, lineGap: 4 }; doc.fillColor(COLORS.dark).font('Helvetica').fontSize(10.5).text(question, 78, qY, opts); doc.y = qY + doc.heightOfString(question, opts) + 8; });
   subhead(doc, 'Interview discipline'); paragraph(doc, 'Use the same core questions and evidence standard for comparable candidates. The assessment should generate better questions, not become a reason to apply a different standard to one candidate.', 10.2, 4);
 
-  // PAGE 6 — ONBOARDING + FINAL VIEW
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Onboarding & Management Recommendations');
   paragraph(doc, `If ${name} progresses into ${role}, the assessment suggests several practical conditions worth considering during onboarding and early management. These are support recommendations, not prescriptions.`, 10.8, 5);
   recommendations.forEach(item => bullet(doc, item, 10.4));
