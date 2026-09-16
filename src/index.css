@@ -28,10 +28,8 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
-/* LANDING PAGE ONLY.
-   The hero correction overlay must NEVER attach to the generic <main> used by
-   questionnaire, thank-you, privacy, terms, support, or other secondary pages.
-   The landing page is uniquely identified by the hero image as a direct child. */
+/* Landing page uses the original hero artwork directly. No overlay or
+   post-render correction is allowed to spill into the page body. */
 .page-container > img[src="/converge-hero.png"] {
   width: 100%;
   height: auto;
@@ -39,20 +37,48 @@
   margin-bottom: 3rem;
 }
 
-.page-container:has(> img[src="/converge-hero.png"]) > main::before {
-  content: '';
-  position: absolute;
-  z-index: 5;
-  pointer-events: none;
-  top: 64px;
-  left: 64px;
-  width: calc(100% - 128px);
-  aspect-ratio: 1536 / 1024;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1536 1024'%3E%3Cdefs%3E%3Cstyle%3E.w%7Bfont-family:Arial,Helvetica,sans-serif;fill:%23fff%7D.n%7Bfont-family:Arial,Helvetica,sans-serif;fill:%2311182f%7D%3C/style%3E%3C/defs%3E%3Crect x='494' y='322' width='451' height='154' fill='%235b2b98'/%3E%3Ccircle cx='604' cy='397' r='72' fill='%235b2b98' stroke='%23fff' stroke-width='8'/%3E%3Ctext x='604' y='412' text-anchor='middle' class='w' font-size='43' font-weight='700'%3EEQ%3C/text%3E%3Ctext x='701' y='370' class='w' font-size='36' font-weight='700'%3EEQ%3C/text%3E%3Ctext x='701' y='402' class='w' font-size='23'%3EHow you handle%3C/text%3E%3Ctext x='701' y='430' class='w' font-size='23'%3Ethe human dimension%3C/text%3E%3Crect x='505' y='583' width='292' height='99' fill='%23f6f6f7'/%3E%3Crect x='823' y='583' width='297' height='99' fill='%23f6f6f7'/%3E%3Crect x='1143' y='583' width='307' height='99' fill='%23f6f6f7'/%3E%3Crect x='823' y='681' width='297' height='93' fill='%23f6f6f7'/%3E%3Ctext x='971' y='709' text-anchor='middle' class='n' font-size='19'%3EA deeper integrated%3C/text%3E%3Ctext x='971' y='735' text-anchor='middle' class='n' font-size='19'%3Eanalysis of MBTI, EQ%3C/text%3E%3Ctext x='971' y='761' text-anchor='middle' class='n' font-size='19'%3E&amp;amp; Big Five.%3C/text%3E%3Crect x='0' y='862' width='704' height='152' fill='%23021f3a'/%3E%3Ctext x='72' y='910' class='w' font-size='27' font-weight='700' fill='%236abe46'%3ETHREE PERSPECTIVES.%3C/text%3E%3Ctext x='72' y='948' class='w' font-size='21'%3EOne integrated view of how%3C/text%3E%3Ctext x='72' y='977' class='w' font-size='21'%3Eyou think, behave and relate.%3C/text%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+/* Questionnaire / Letterhead: compact, fixed information block. */
+.page-container:has(> header) > header.bg-navy {
+  padding: 24px 32px;
+  margin-bottom: 28px;
 }
 
-/* Return Home instruction: scoped to the uniquely styled Return Home button.
-   This must not decorate questionnaire controls or admin authentication. */
+.page-container:has(> header) > header.bg-navy > a > div {
+  display: block;
+  max-width: 760px;
+}
+
+.page-container:has(> header) > header.bg-navy > a > div p {
+  display: none;
+}
+
+.page-container:has(> header) > header.bg-navy > a > div::after {
+  content: "Three perspectives. One integrated profile.\A Drawing on three well-established perspectives: MBTI, EQ and Big Five.\A 76 questions. Under 10 minutes.\A No right or wrong answers. Don't overthink it.";
+  display: block;
+  white-space: pre-line;
+  color: rgba(255,255,255,.95);
+  font-family: Montserrat, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: .7px;
+}
+
+/* Keep all five response choices visible in the normal desktop viewport. */
+.page-container:has(> header) > main h3 {
+  margin-bottom: 24px !important;
+}
+
+.page-container:has(> header) > main .grid.grid-cols-1.gap-3 button.p-6 {
+  padding: 12px 18px !important;
+  min-height: 48px;
+}
+
+.page-container:has(> header) > main > div:first-child {
+  margin-bottom: 18px !important;
+}
+
+/* Return Home instruction: scoped to the uniquely styled Return Home button. */
 .page-container main > button.border-b.border-navy {
   position: relative;
 }
@@ -76,5 +102,7 @@
 .section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
 
 @media (max-width: 767px) {
-  .page-container:has(> img[src="/converge-hero.png"]) > main::before { top: 32px; left: 32px; width: calc(100% - 64px); }
+  .page-container:has(> header) > header.bg-navy { padding: 20px 20px; }
+  .page-container:has(> header) > main h3 { font-size: 2rem !important; line-height: 1.15 !important; }
+  .page-container:has(> header) > main .grid.grid-cols-1.gap-3 button.p-6 { padding: 10px 14px !important; min-height: 44px; }
 }
