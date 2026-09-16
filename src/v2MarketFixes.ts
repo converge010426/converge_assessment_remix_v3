@@ -104,37 +104,9 @@ function addContactBox(container: Element, variant: 'landing' | 'quiz' | 'thanky
 
 function addHeroCorrection(): void {
   const image = document.querySelector<HTMLImageElement>('.page-container > img[src="/converge-hero.png"]');
-  if (!image || image.parentElement?.querySelector('[data-converge-current-hero]')) return;
-
-  const wrapper = document.createElement('div');
-  wrapper.dataset.convergeCurrentHero = 'true';
-  wrapper.style.cssText = 'position:relative;width:100%;margin-bottom:3rem;line-height:0;overflow:hidden;';
-  image.parentElement?.insertBefore(wrapper, image);
-  wrapper.appendChild(image);
-
-  const layer = document.createElement('div');
-  layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;font-family:Montserrat,Arial,sans-serif;';
-  layer.innerHTML = `
-    <div style="position:absolute;left:32.1%;top:31.45%;width:29.5%;height:15.2%;background:#5f31a1;color:#fff;display:flex;align-items:center;justify-content:center;">
-      <div style="width:100%;height:100%;position:relative;">
-        <div style="position:absolute;left:8%;top:10%;width:31%;height:78%;border:6px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:clamp(18px,3vw,44px);">EQ</div>
-        <div style="position:absolute;left:46%;top:17%;font-weight:800;font-size:clamp(16px,2.2vw,32px);">EQ</div>
-        <div style="position:absolute;left:46%;top:43%;font-size:clamp(12px,1.6vw,24px);line-height:1.05;">How you handle<br>the human dimension</div>
-      </div>
-    </div>
-    <div style="position:absolute;left:5.5%;top:50.5%;width:25%;height:6.1%;background:#f6f7f9;color:#14233f;display:flex;align-items:center;padding-left:1%;font-weight:800;font-size:clamp(13px,1.8vw,28px);">76 QUESTION QUESTIONNAIRE</div>
-    <div style="position:absolute;left:32.8%;top:56.8%;width:19.1%;height:18.8%;background:#f6f7f9;"></div>
-    <div style="position:absolute;left:53.5%;top:56.8%;width:19.2%;height:18.8%;background:#f6f7f9;"></div>
-    <div style="position:absolute;left:74.5%;top:56.8%;width:20.1%;height:18.8%;background:#f6f7f9;"></div>
-    <div style="position:absolute;left:32.8%;top:59.5%;width:19.1%;text-align:center;color:#14233f;font-size:clamp(11px,1.35vw,20px);line-height:1.18;">A focused MBTI<br>personality assessment<br>and report.<div style="height:2px;background:#214f8b;width:62%;margin:14px auto 0;"></div></div>
-    <div style="position:absolute;left:53.5%;top:59.5%;width:19.2%;text-align:center;color:#14233f;font-size:clamp(11px,1.35vw,20px);line-height:1.18;">A deeper integrated<br>analysis of MBTI, EQ<br>&amp; Big Five.<div style="height:2px;background:#6b35ad;width:62%;margin:14px auto 0;"></div></div>
-    <div style="position:absolute;left:74.5%;top:59.5%;width:20.1%;text-align:center;color:#14233f;font-size:clamp(11px,1.35vw,20px);line-height:1.18;">The comprehensive assessment<br>plus a job-specific Candidate<br>Suitability Analysis.<div style="height:2px;background:#248743;width:62%;margin:14px auto 0;"></div></div>
-    <div style="position:absolute;left:0;top:84.2%;width:45.8%;height:14.7%;background:#022340;color:#fff;padding:2.6% 0 0 4.6%;box-sizing:border-box;">
-      <div style="font-weight:800;font-size:clamp(15px,2vw,27px);color:#59bf3e;line-height:1.1;">THREE PERSPECTIVES.</div>
-      <div style="font-size:clamp(12px,1.55vw,22px);line-height:1.25;margin-top:8px;">One integrated view of how<br>you think, behave and relate.</div>
-    </div>
-  `;
-  wrapper.appendChild(layer);
+  if (!image) return;
+  image.src = '/converge-hero-fixed.svg';
+  image.removeAttribute('srcset');
 }
 
 function applyV2PresentationFixes(): void {
