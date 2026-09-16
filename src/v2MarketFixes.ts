@@ -1,10 +1,15 @@
 import { calculateResults } from './logic';
+import { questions } from './questions';
 
 const CONTACT_EMAIL = 'tomknsn@gmail.com';
 const WHATSAPP = '0749361406';
 const WHATSAPP_INTL = '27749361406';
 const STORAGE_NAME = 'converge_candidate_name';
 const STORAGE_EMAIL = 'converge_candidate_email';
+const STORAGE_ANSWERS = 'converge_saved_answers';
+const STORAGE_REUSE = 'converge_reuse_ready';
+const STORAGE_PRODUCT = 'converge_last_product';
+const STORAGE_REPLAY = 'converge_replay_state';
 
 function rememberCandidateDetails(): void {
   if (typeof window === 'undefined') return;
@@ -12,9 +17,23 @@ function rememberCandidateDetails(): void {
     const target = event.target as HTMLInputElement | null;
     if (!target) return;
     const value = target.value.trim();
-    if (target.type === 'email' || target.name?.toLowerCase().includes('email') || target.placeholder?.toLowerCase().includes('email')) {
+    const isEmail = target.type === 'email' || target.name?.toLowerCase().includes('email') || target.placeholder?.toLowerCase().includes('email');
+    const isName = target.type === 'text' && (target.placeholder?.toLowerCase().includes('full name') || target.name?.toLowerCase().includes('name'));
+    if (isEmail) {
+      const previous = sessionStorage.getItem(STORAGE_EMAIL)?.trim() || '';
+      if (previous && value && previous !== value) {
+        sessionStorage.removeItem(STORAGE_ANSWERS);
+        sessionStorage.removeItem(STORAGE_REUSE);
+        sessionStorage.removeItem(STORAGE_REPLAY);
+      }
       if (value) sessionStorage.setItem(STORAGE_EMAIL, value);
-    } else if (target.type === 'text' && (target.placeholder?.toLowerCase().includes('full name') || target.name?.toLowerCase().includes('name'))) {
+    } else if (isName) {
+      const previous = sessionStorage.getItem(STORAGE_NAME)?.trim() || '';
+      if (previous && value && previous !== value) {
+        sessionStorage.removeItem(STORAGE_ANSWERS);
+        sessionStorage.removeItem(STORAGE_REUSE);
+        sessionStorage.removeItem(STORAGE_REPLAY);
+      }
       if (value) sessionStorage.setItem(STORAGE_NAME, value);
     }
   }, true);
@@ -31,31 +50,29 @@ function installSubmissionProtection(): void {
     if (!url.endsWith('/api/submit') || !init?.body || typeof init.body !== 'string') {
       return originalFetch(input, init);
     }
-
     try {
       const body = JSON.parse(init.body);
       const storedName = sessionStorage.getItem(STORAGE_NAME)?.trim() || '';
       const storedEmail = sessionStorage.getItem(STORAGE_EMAIL)?.trim() || '';
       const name = String(body.name || storedName).trim();
       const email = String(body.email || storedEmail).trim();
-
       if (!name || !email) {
         return new Response(JSON.stringify({
           error: 'MISSING_CANDIDATE_DETAILS',
           message: 'Please enter your full name and email address before submitting your assessment.'
         }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
-
       const calculatedResults = body.answers ? calculateResults(body.answers) : body.results;
       const protectedBody = {
         ...body,
         name,
         email,
         results: calculatedResults,
-        product: body.product || sessionStorage.getItem('last_product') || 'mbti'
+        product: body.product || sessionStorage.getItem(STORAGE_PRODUCT) || 'mbti'
       };
       sessionStorage.setItem(STORAGE_NAME, name);
       sessionStorage.setItem(STORAGE_EMAIL, email);
+      sessionStorage.setItem(STORAGE_PRODUCT, protectedBody.product);
       return originalFetch(input, { ...init, body: JSON.stringify(protectedBody) });
     } catch (error) {
       console.error('[CONVERGE] Submission protection failed safely:', error);
@@ -71,6 +88,138 @@ function replaceText(root: ParentNode, oldText: string, newText: string): void {
   nodes.forEach(node => {
     if (node.nodeValue?.includes(oldText)) node.nodeValue = node.nodeValue.replace(oldText, newText);
   });
+}
+
+function setReactInputValue(input: HTMLInputElement, value: string): void {
+  const prototype = Object.getPrototypeOf(input);
+  const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+  descriptor?.set?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function restoreCandidateDetailsOnLanding(): void {
+  if (window.location.pathname !== '/') return;
+  const name = sessionStorage.getItem(STORAGE_NAME)?.trim() || '';
+  const email = sessionStorage.getItem(STORAGE_EMAIL)?.trim() || '';
+  if (!name && !email) return;
+  const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('.page-container input'));
+  const nameInput = inputs.find(input => input.placeholder?.toLowerCase().includes('full name') || input.name?.toLowerCase().includes('name'));
+  const emailInput = inputs.find(input => input.type === 'email' || input.placeholder?.toLowerCase().includes('email') || input.name?.toLowerCase().includes('email'));
+  if (nameInput && name && nameInput.value !== name) setReactInputValue(nameInput, name);
+  if (emailInput && email && emailInput.value !== email) setReactInputValue(emailInput, email);
+}
+
+function rememberAssessmentAnswers(): void {
+  if ((window as any).__convergeAnswerCapture) return;
+  (window as any).__convergeAnswerCapture = true;
+  document.addEventListener('click', (event) => {
+    if (window.location.pathname !== '/quiz') return;
+    const button = (event.target as Element | null)?.closest('button');
+    if (!button) return;
+    const label = button.textContent?.trim() || '';
+    const valueByLabel: Record<string, number> = {
+      'Strongly Agree': 5,
+      'Agree': 4,
+      'Neutral': 3,
+      'Disagree': 2,
+      'Strongly Disagree': 1,
+    };
+    const value = valueByLabel[label];
+    if (!value) return;
+    const heading = Array.from(document.querySelectorAll('h2')).find(h => /^Question\s+\d+\s+of\s+\d+$/i.test(h.textContent?.trim() || ''));
+    const match = heading?.textContent?.match(/Question\s+(\d+)\s+of\s+(\d+)/i);
+    if (!match) return;
+    const questionNumber = Number(match[1]);
+    const total = Number(match[2]);
+    if (!Number.isFinite(questionNumber) || questionNumber < 1 || questionNumber > questions.length) return;
+    let saved: Record<string, number> = {};
+    try { saved = JSON.parse(sessionStorage.getItem(STORAGE_ANSWERS) || '{}'); } catch { saved = {}; }
+    saved[String(questionNumber)] = value;
+    sessionStorage.setItem(STORAGE_ANSWERS, JSON.stringify(saved));
+    if (total === questions.length && Object.keys(saved).length >= questions.length) {
+      sessionStorage.setItem(STORAGE_REUSE, 'true');
+    }
+  }, true);
+}
+
+function hasCompleteSavedAnswers(): boolean {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STORAGE_ANSWERS) || '{}') as Record<string, number>;
+    return questions.length > 0 && questions.every((_, index) => Number.isFinite(saved[String(index + 1)]));
+  } catch {
+    return false;
+  }
+}
+
+function answerLabel(value: number): string {
+  return ({ 5: 'Strongly Agree', 4: 'Agree', 3: 'Neutral', 2: 'Disagree', 1: 'Strongly Disagree' } as Record<number, string>)[value] || '';
+}
+
+function replaySavedAnswersOnce(): void {
+  if (window.location.pathname !== '/quiz') return;
+  if (sessionStorage.getItem(STORAGE_REUSE) !== 'true' || !hasCompleteSavedAnswers()) return;
+  if (sessionStorage.getItem(STORAGE_REPLAY) === 'done') return;
+
+  let saved: Record<string, number>;
+  try { saved = JSON.parse(sessionStorage.getItem(STORAGE_ANSWERS) || '{}'); } catch { return; }
+
+  let state: { question: number; attempts: number } = { question: 1, attempts: 0 };
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(STORAGE_REPLAY) || '');
+    if (parsed?.active) state = parsed;
+  } catch { /* start at question 1 */ }
+
+  const step = () => {
+    if (window.location.pathname !== '/quiz') return;
+    const heading = Array.from(document.querySelectorAll('h2')).find(h => /^Question\s+\d+\s+of\s+\d+$/i.test(h.textContent?.trim() || ''));
+    const match = heading?.textContent?.match(/Question\s+(\d+)\s+of\s+(\d+)/i);
+    if (!match) {
+      window.setTimeout(step, 120);
+      return;
+    }
+    const current = Number(match[1]);
+    const total = Number(match[2]);
+    if (total !== questions.length || current >= questions.length) {
+      sessionStorage.setItem(STORAGE_REPLAY, 'done');
+      return;
+    }
+    const target = answerLabel(saved[String(current)]);
+    const button = Array.from(document.querySelectorAll<HTMLButtonElement>('.page-container main button')).find(b => b.textContent?.trim() === target);
+    if (!button) {
+      state.attempts += 1;
+      if (state.attempts > 15) {
+        sessionStorage.removeItem(STORAGE_REPLAY);
+        return;
+      }
+      sessionStorage.setItem(STORAGE_REPLAY, JSON.stringify({ active: true, question: current, attempts: state.attempts }));
+      window.setTimeout(step, 120);
+      return;
+    }
+    state = { question: current + 1, attempts: 0 };
+    sessionStorage.setItem(STORAGE_REPLAY, JSON.stringify({ active: true, question: state.question, attempts: 0 }));
+    button.click();
+    window.setTimeout(step, 120);
+  };
+
+  sessionStorage.setItem(STORAGE_REPLAY, JSON.stringify({ active: true, question: state.question, attempts: state.attempts }));
+  window.setTimeout(step, 180);
+}
+
+function installBeginAssessmentFallback(): void {
+  if ((window as any).__convergeBeginFallback) return;
+  (window as any).__convergeBeginFallback = true;
+  document.addEventListener('click', (event) => {
+    if (window.location.pathname !== '/') return;
+    const button = (event.target as Element | null)?.closest('button');
+    if (!button || button.textContent?.trim() !== 'Begin Assessment') return;
+    window.setTimeout(() => {
+      if (window.location.pathname === '/') {
+        window.history.pushState({}, '', '/quiz');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+    }, 80);
+  }, true);
 }
 
 function addContactBox(container: Element, variant: 'landing' | 'quiz' | 'thankyou'): void {
@@ -105,13 +254,11 @@ function addContactBox(container: Element, variant: 'landing' | 'quiz' | 'thanky
 function addHeroCorrection(): void {
   const image = document.querySelector<HTMLImageElement>('.page-container > img[src="/converge-hero.png"]');
   if (!image || image.parentElement?.querySelector('[data-converge-hero-overlay]')) return;
-
   const wrapper = document.createElement('div');
   wrapper.dataset.convergeHeroWrapper = 'true';
   wrapper.style.cssText = 'position:relative;width:100%;margin-bottom:3rem;line-height:0;overflow:hidden;';
   image.parentElement?.insertBefore(wrapper, image);
   wrapper.appendChild(image);
-
   const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   overlay.setAttribute('viewBox', '0 0 1536 1024');
   overlay.setAttribute('preserveAspectRatio', 'none');
@@ -155,7 +302,6 @@ function addHeroCorrection(): void {
 
 function applyV2PresentationFixes(): void {
   const path = window.location.pathname;
-
   if (path === '/') {
     replaceText(document, 'A verified psychological architecture, built from three validated frameworks.', 'A psychological architecture drawing on three well-established perspectives.');
     replaceText(document, 'Three Validated Frameworks', 'Three Well-Established Perspectives');
@@ -166,13 +312,13 @@ function applyV2PresentationFixes(): void {
     addHeroCorrection();
     const main = document.querySelector('.page-container main');
     if (main) addContactBox(main, 'landing');
+    restoreCandidateDetailsOnLanding();
   }
-
   if (path === '/quiz') {
     const main = document.querySelector('.page-container main');
     if (main && !main.querySelector('[data-converge-contact-box]')) addContactBox(main, 'quiz');
+    replaySavedAnswersOnce();
   }
-
   if (path === '/thank-you') {
     const returnHome = Array.from(document.querySelectorAll('button')).find(button => button.textContent?.trim() === 'Return Home');
     const main = returnHome?.closest('main');
@@ -184,8 +330,36 @@ function applyV2PresentationFixes(): void {
   }
 }
 
+function installRouteObserver(): void {
+  if ((window as any).__convergeRouteObserver) return;
+  (window as any).__convergeRouteObserver = true;
+  const rerun = () => {
+    window.setTimeout(applyV2PresentationFixes, 0);
+    window.setTimeout(applyV2PresentationFixes, 120);
+    window.setTimeout(restoreCandidateDetailsOnLanding, 250);
+  };
+  const originalPushState = history.pushState.bind(history);
+  history.pushState = ((...args: Parameters<History['pushState']>) => {
+    originalPushState(...args);
+    rerun();
+  }) as History['pushState'];
+  const originalReplaceState = history.replaceState.bind(history);
+  history.replaceState = ((...args: Parameters<History['replaceState']>) => {
+    originalReplaceState(...args);
+    rerun();
+  }) as History['replaceState'];
+  window.addEventListener('popstate', rerun);
+  const observer = new MutationObserver(() => {
+    if (window.location.pathname === '/') restoreCandidateDetailsOnLanding();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
 export function installV2MarketFixes(): void {
   installSubmissionProtection();
+  rememberAssessmentAnswers();
+  installBeginAssessmentFallback();
+  installRouteObserver();
   const run = () => applyV2PresentationFixes();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', run, { once: true });
