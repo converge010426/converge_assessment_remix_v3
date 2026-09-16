@@ -28,12 +28,11 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
-/* Landing page uses the original hero artwork directly. */
+/* Landing page uses the original hero artwork directly; the current hero correction is scoped to its wrapper. */
 .page-container > img[src="/converge-hero.png"] {
   width: 100%;
   height: auto;
   display: block;
-  margin-bottom: 3rem;
 }
 
 /* Questionnaire / Letterhead: compact header with no question-count block. */
@@ -77,6 +76,15 @@
   margin-bottom: 18px !important;
 }
 
+/* Final-question contact box: present in the DOM throughout the quiz, but visible only when SUBMIT/NEXT is present. */
+.converge-quiz-contact {
+  display: none !important;
+}
+
+.page-container:has(> header) > main:has(button.bg-gold) .converge-quiz-contact {
+  display: block !important;
+}
+
 /* Return Home instruction: scoped to the uniquely styled Return Home button. */
 .page-container main > button.border-b.border-navy {
   position: relative;
@@ -96,7 +104,7 @@
   line-height: 1.6;
   text-transform: none;
   white-space: normal;
-  }
+}
 
 .section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
 
