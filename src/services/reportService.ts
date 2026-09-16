@@ -87,6 +87,13 @@ function mbtiLabels(type: string): string[] {
   return [type[0] === 'E' ? 'Extraverted' : 'Introverted', type[1] === 'S' ? 'Sensing' : 'Intuitive', type[2] === 'T' ? 'Thinking' : 'Feeling', type[3] === 'J' ? 'Judging' : 'Perceiving'];
 }
 
+function mbtiNarrative(results: AssessmentResults): string {
+  const strength = results.mbtiStrengths ?? results.ei?._v2Meta?.mbtiStrengths;
+  if (!strength) return mbtiPreferenceText(results);
+  const pair = (score: number, first: string, second: string) => score >= 62 ? `${first} is the stronger preference in this profile` : score <= 38 ? `${second} is the stronger preference in this profile` : `the ${first}/${second} dimension is relatively balanced in this profile`;
+  return `The MBTI result is ${results.mbti}. The response pattern indicates that ${pair(strength.EI, 'Extraversion', 'Introversion')}, ${pair(strength.SN, 'Sensing', 'Intuition')}, ${pair(strength.TF, 'Thinking', 'Feeling')}, and ${pair(strength.JP, 'Judging', 'Perceiving')}. These are preference signals rather than fixed traits or limits, and the wider CONVERGE results provide additional context.`;
+}
+
 export async function generateMBTIReport(name: string, results: AssessmentResults): Promise<string> {
   const { doc, stream, filePath } = prepareReport(name, 'MBTI_Report');
   const info = typeDescriptions[results.mbti];
@@ -102,11 +109,8 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(54).text(results.mbti, 70, doc.y + 25);
   doc.fillColor(COLORS.gold).font('Helvetica-BoldOblique').fontSize(16).text(`${info.title} • ${info.subtitle}`, 225, doc.y + 34, { width: 305 });
   doc.y += 142;
-  para(doc, info.description, 11.4);
+  para(doc, mbtiNarrative(results), 11.2);
   sub(doc, 'Your Four Preference Dimensions');
-
-  // Keep all four preference cards on one fixed row. PDFKit text calls must not
-  // move doc.y between cards or later cards can spill onto new pages.
   const cardY = doc.y;
   labels.forEach((label, i) => {
     const x = 50 + i * 128;
@@ -117,7 +121,7 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   doc.y = cardY + 94;
 
   doc.addPage(); header(doc); title(doc, 'Preference Strength & Integrated Pattern');
-  para(doc, mbtiPreferenceText(results));
+  para(doc, mbtiNarrative(results));
   sub(doc, 'What the Wider Profile Adds');
   insights.slice(0, 3).forEach((item) => insight(doc, item));
   sub(doc, 'Key Strengths');
@@ -142,8 +146,6 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   const insights = frameworkSummary(results);
   const b = results.bigFive, e = results.ei;
 
-  // PAGE 1 — COVER. All cover elements use fixed coordinates so a long
-  // candidate name or wrapped paragraph cannot push the next page onto page 2.
   header(doc); title(doc, 'Comprehensive Personality Assessment');
   para(doc, 'CONVERGE brings together three distinct perspectives to provide a broader, more individualised view of how you tend to think, behave and relate. The report should be read as an integrated pattern, not as three unrelated scores.', 10.7);
   doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9).text('PREPARED FOR', 50, 250, { characterSpacing: 1.5 });
@@ -155,7 +157,6 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   doc.fillColor(COLORS.gold).font('Helvetica-BoldOblique').fontSize(16).text(`${info.title} • ${info.subtitle}`, 180, 425, { width: 340 });
   paraAt(doc, 'MBTI describes preferences. Big Five describes broad trait tendencies. Emotional Intelligence describes emotional and interpersonal capacities. The value of CONVERGE comes from considering the evidence together.', 10.6, 525);
 
-  // PAGE 2 — INTEGRATED PROFILE
   doc.addPage(); header(doc); title(doc, 'Your Integrated CONVERGE Profile');
   para(doc, mbtiPreferenceText(results), 10.9);
   insights.forEach((item) => insight(doc, item));
@@ -165,7 +166,6 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   const answered = evidence?.answeredCount ?? expected;
   para(doc, `RESPONSE EVIDENCE: ${answered} of ${expected} assessment questions were answered. This confirms completion of the assessment; it is not a validity certificate or a measure of psychological consistency.`, 10.3);
 
-  // PAGE 3 — BIG FIVE
   doc.addPage(); header(doc); title(doc, 'Big Five Personality Traits');
   para(doc, 'The Big Five section provides independent trait evidence. Scores are scaled indicators from the CONVERGE response model; they are not population percentiles.', 10.7);
   [['Openness', b.openness], ['Conscientiousness', b.conscientiousness], ['Extraversion', b.extraversion], ['Agreeableness', b.agreeableness], ['Emotional Stability', b.emotionalStability]].forEach(([label, score]) => { scoreBar(doc, String(label), Number(score)); });
@@ -179,7 +179,6 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   ];
   bfNarratives.forEach(([label, score, text]) => { sub(doc, String(label)); para(doc, String(text), 10.2); });
 
-  // PAGE 4 — EQ
   doc.addPage(); header(doc); title(doc, 'Emotional Intelligence Profile');
   para(doc, 'The EQ section considers five distinct capacities. These are indicators of self-reported tendencies and should be understood as part of the wider evidence pattern.', 10.7);
   [['Self-Awareness', e.selfAwareness], ['Self-Regulation', e.selfRegulation], ['Motivation', e.motivation], ['Empathy', e.empathy], ['Social Skills', e.socialSkills]].forEach(([label, score]) => { scoreBar(doc, String(label), Number(score)); });
@@ -188,7 +187,6 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   sub(doc, 'Where Development May Add Value');
   lowTwo(e).forEach(([label, score]) => bullet(doc, `${label}: ${score}/100 — this is an area worth understanding and developing rather than treating as a fixed limitation.`));
 
-  // PAGE 5 — PRACTICAL INTEGRATION
   doc.addPage(); header(doc); title(doc, 'Putting the Pattern to Work');
   sub(doc, 'What the Results Suggest');
   insights.slice(0, 5).forEach((item) => insight(doc, item));
