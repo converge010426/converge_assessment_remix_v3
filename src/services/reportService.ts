@@ -160,8 +160,9 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   para(doc, mbtiPreferenceText(results), 10.9);
   insights.forEach((item) => insight(doc, item));
   sub(doc, 'Response Evidence');
-  const expected = results.evidence?.expectedCount ?? 76;
-  const answered = results.evidence?.answeredCount ?? expected;
+  const evidence = results.evidence ?? results.ei?._v2Meta?.evidence;
+  const expected = evidence?.expectedCount ?? 76;
+  const answered = evidence?.answeredCount ?? expected;
   para(doc, `RESPONSE EVIDENCE: ${answered} of ${expected} assessment questions were answered. This confirms completion of the assessment; it is not a validity certificate or a measure of psychological consistency.`, 10.3);
 
   // PAGE 3 — BIG FIVE
