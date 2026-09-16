@@ -77,6 +77,7 @@ function addContactBox(container: Element, variant: 'landing' | 'quiz' | 'thanky
   if (container.querySelector('[data-converge-contact-box]')) return;
   const box = document.createElement('section');
   box.dataset.convergeContactBox = 'true';
+  if (variant === 'quiz') box.classList.add('converge-quiz-contact');
   box.style.cssText = 'margin:28px 0;padding:20px 22px;border:1px solid rgba(197,160,89,.35);background:#fff;box-shadow:0 8px 24px rgba(26,43,75,.08);max-width:760px;';
   const intro = variant === 'quiz'
     ? 'Need help while completing the assessment? Send us a message. We will help without influencing your answers.'
@@ -152,10 +153,8 @@ function applyV2PresentationFixes(): void {
   }
 
   if (path === '/quiz') {
-    const submitButton = Array.from(document.querySelectorAll('button')).find(button => button.textContent?.trim() === 'SUBMIT' || button.textContent?.includes('NEXT: JOB CONTEXT'));
-    const row = submitButton?.parentElement;
-    const host = row?.parentElement;
-    if (host && !host.querySelector('[data-converge-contact-box]')) addContactBox(host, 'quiz');
+    const main = document.querySelector('.page-container main');
+    if (main && !main.querySelector('[data-converge-contact-box]')) addContactBox(main, 'quiz');
   }
 
   if (path === '/thank-you') {
