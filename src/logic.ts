@@ -3,12 +3,14 @@ import { questions, QuestionDimension } from './questions.js';
 export type MBTIType = 'INTJ' | 'INFJ' | 'ENTJ' | 'ENFJ' | 'ISTJ' | 'ISFJ' | 'ESTJ' | 'ESFJ' | 'INTP' | 'INFP' | 'ENTP' | 'ENFP' | 'ISTP' | 'ISFP' | 'ESTP' | 'ESFP';
 
 type MBTIStrengths = { EI: number; SN: number; TF: number; JP: number };
+type Evidence = { responseConsistency: number; answeredCount: number; expectedCount: number; constructSpread: Record<string, number> };
+
 export interface AssessmentResults {
   mbti: MBTIType;
   mbtiStrengths: MBTIStrengths;
   bigFive: { openness: number; conscientiousness: number; extraversion: number; agreeableness: number; emotionalStability: number };
-  ei: { selfAwareness: number; selfRegulation: number; motivation: number; empathy: number; socialSkills: number };
-  evidence: { responseConsistency: number; answeredCount: number; expectedCount: number; constructSpread: Record<string, number> };
+  ei: { selfAwareness: number; selfRegulation: number; motivation: number; empathy: number; socialSkills: number; _v2Meta?: { mbtiStrengths: MBTIStrengths; evidence: Evidence } };
+  evidence: Evidence;
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
@@ -31,6 +33,7 @@ export function calculateResults(answers: Record<number, number>): AssessmentRes
   const E = avg('E'), I = avg('I'), S = avg('S'), N = avg('N'), T = avg('T'), F = avg('F'), J = avg('J'), P = avg('P');
   const mbti = `${E > I ? 'E' : 'I'}${S > N ? 'S' : 'N'}${T > F ? 'T' : 'F'}${J > P ? 'J' : 'P'}` as MBTIType;
   const strength = (a: number, b: number) => clamp(50 + ((a - b) / 4) * 50);
+  const mbtiStrengths = { EI: strength(E, I), SN: strength(S, N), TF: strength(T, F), JP: strength(J, P) };
 
   const constructKeys = ['O', 'C', 'BF_E', 'A', 'N_BF', 'EI_SA', 'EI_SR', 'EI_MO', 'EI_EM', 'EI_SS'];
   const constructSpread: Record<string, number> = {};
@@ -47,10 +50,23 @@ export function calculateResults(answers: Record<number, number>): AssessmentRes
   // This is deliberately a completion/evidence-coverage signal, not a claim that
   // low answer variance or agreement proves response consistency.
   const responseConsistency = clamp((answeredCount / questions.length) * 100);
+  const evidence: Evidence = { responseConsistency, answeredCount, expectedCount: questions.length, constructSpread };
+
+  const ei = {
+    selfAwareness: scale(avg('EI_SA')),
+    selfRegulation: scale(avg('EI_SR')),
+    motivation: scale(avg('EI_MO')),
+    empathy: scale(avg('EI_EM')),
+    socialSkills: scale(avg('EI_SS')),
+    // The current App submission normalizer preserves the complete EI object but
+    // reconstructs MBTI/Big Five objects. Keep the V2-only metadata with EI so
+    // preference strengths and evidence are not silently lost before report generation.
+    _v2Meta: { mbtiStrengths, evidence },
+  };
 
   return {
     mbti,
-    mbtiStrengths: { EI: strength(E, I), SN: strength(S, N), TF: strength(T, F), JP: strength(J, P) },
+    mbtiStrengths,
     bigFive: {
       openness: scale(avg('O')),
       conscientiousness: scale(avg('C')),
@@ -58,14 +74,8 @@ export function calculateResults(answers: Record<number, number>): AssessmentRes
       agreeableness: scale(avg('A')),
       emotionalStability: scale(6 - avg('N_BF')),
     },
-    ei: {
-      selfAwareness: scale(avg('EI_SA')),
-      selfRegulation: scale(avg('EI_SR')),
-      motivation: scale(avg('EI_MO')),
-      empathy: scale(avg('EI_EM')),
-      socialSkills: scale(avg('EI_SS')),
-    },
-    evidence: { responseConsistency, answeredCount, expectedCount: questions.length, constructSpread },
+    ei,
+    evidence,
   };
 }
 
