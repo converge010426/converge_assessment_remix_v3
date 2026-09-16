@@ -28,8 +28,7 @@
   @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
 }
 
-/* Landing page uses the original hero artwork directly. No overlay or
-   post-render correction is allowed to spill into the page body. */
+/* Landing page uses the original hero artwork directly. */
 .page-container > img[src="/converge-hero.png"] {
   width: 100%;
   height: auto;
@@ -37,7 +36,7 @@
   margin-bottom: 3rem;
 }
 
-/* Questionnaire / Letterhead: compact, fixed information block. */
+/* Questionnaire / Letterhead: compact header with no question-count block. */
 .page-container:has(> header) > header.bg-navy {
   padding: 24px 32px;
   margin-bottom: 28px;
@@ -53,7 +52,7 @@
 }
 
 .page-container:has(> header) > header.bg-navy > a > div::after {
-  content: "Three perspectives. One integrated profile.\A Drawing on three well-established perspectives: MBTI, EQ and Big Five.\A 76 questions. Under 10 minutes.\A No right or wrong answers. Don't overthink it.";
+  content: "Three perspectives. One integrated profile.\A MBTI • EQ • Big Five.\A No right or wrong answers. Don't overthink it.";
   display: block;
   white-space: pre-line;
   color: rgba(255,255,255,.95);
@@ -97,7 +96,7 @@
   line-height: 1.6;
   text-transform: none;
   white-space: normal;
-}
+  }
 
 .section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
 
