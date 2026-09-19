@@ -71,12 +71,16 @@ export function frameworkSummary(results: AssessmentResults): Insight[] {
   return insights;
 }
 
+const MBTI_WORD: Record<string, string> = {
+  E: 'Extraversion', I: 'Introversion', S: 'Sensing', N: 'Intuition', T: 'Thinking', F: 'Feeling', J: 'Judging', P: 'Perceiving',
+};
+
 export function mbtiPreferenceText(results: AssessmentResults): string {
   const s = results.mbtiStrengths ?? results.ei?._v2Meta?.mbtiStrengths;
   if (!s) return `The MBTI result is ${results.mbti}. Preference strength data was not retained in this submission record, so the four-letter result is presented without a strength claim.`;
   const entries: Array<[string, number]> = [
-    [`${results.mbti[0]} preference`, s.EI], [`${results.mbti[1]} preference`, s.SN], [`${results.mbti[2]} preference`, s.TF], [`${results.mbti[3]} preference`, s.JP],
+    [MBTI_WORD[results.mbti[0]], s.EI], [MBTI_WORD[results.mbti[1]], s.SN], [MBTI_WORD[results.mbti[2]], s.TF], [MBTI_WORD[results.mbti[3]], s.JP],
   ];
   const strongest = [...entries].sort((a, b) => Math.abs(b[1] - 50) - Math.abs(a[1] - 50))[0];
-  return `The MBTI result is ${results.mbti}. Of the four preference pairs, the clearest relative preference is the ${strongest[0].toLowerCase()}, while the other dimensions should be read as part of the overall pattern rather than as absolute categories.`;
+  return `The MBTI result is ${results.mbti}. Of the four preference pairs, the clearest relative preference is ${strongest[0]}, while the other dimensions should be read as part of the overall pattern rather than as absolute categories.`;
 }
