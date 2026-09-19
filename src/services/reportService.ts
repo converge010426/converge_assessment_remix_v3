@@ -8,6 +8,12 @@ import { CONVERGE_BADGE_PNG_BASE64, CONVERGE_BADGE_ASPECT_RATIO } from '../asset
 
 const BADGE = Buffer.from(CONVERGE_BADGE_PNG_BASE64, 'base64');
 const COLORS = { navy: '#1a2b4b', gold: '#c5a059', dark: '#111111', grey: '#444444', light: '#f9f7f2' };
+// Approved CONVERGE contact details, sourced from the existing corporate identity
+// constants already used elsewhere in the app (see v2MarketFixes.ts CONTACT_EMAIL /
+// WHATSAPP_INTL). Do not change these values here — they must stay in sync with
+// that single source of truth.
+const CONTACT_EMAIL = 'tomknsn@gmail.com';
+const CONTACT_WHATSAPP_DISPLAY = '+27 74 936 1406';
 
 function prepareReport(name: string, prefix: string) {
   const dir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'reports');
@@ -27,6 +33,7 @@ function header(doc: PDFKit.PDFDocument): void {
   const width = doc.widthOfString('CONVERGE', { characterSpacing: 1 });
   doc.fontSize(11).text('TM', textX + width + 2, y);
   doc.fillColor(COLORS.grey).font('Helvetica-Oblique').fontSize(10.5).text('Three frameworks. One you.', textX, y + 34, { characterSpacing: 0.5 });
+  doc.fillColor(COLORS.grey).font('Helvetica').fontSize(7.5).text(`${CONTACT_EMAIL}   •   WhatsApp ${CONTACT_WHATSAPP_DISPLAY}`, textX, y + 47, { characterSpacing: 0.3 });
   doc.moveTo(50, 96).lineTo(545, 96).strokeColor(COLORS.gold).lineWidth(0.75).stroke();
 }
 
@@ -36,9 +43,17 @@ function footer(doc: PDFKit.PDFDocument, page: number): void {
 }
 
 function title(doc: PDFKit.PDFDocument, text: string): void {
-  doc.fillColor(COLORS.dark).font('Helvetica-Bold').fontSize(19).text(text.toUpperCase(), 50, 112, { width: 495, characterSpacing: 1 });
-  doc.moveTo(50, 140).lineTo(545, 140).strokeColor(COLORS.gold).lineWidth(1).stroke();
-  doc.y = 164;
+  const upper = text.toUpperCase();
+  const opts = { width: 495, characterSpacing: 1 };
+  doc.fillColor(COLORS.dark).font('Helvetica-Bold').fontSize(19);
+  // Measure the actual rendered height first (headings can wrap to two lines for
+  // longer section titles), so the rule and following content are never placed
+  // on top of a second wrapped line.
+  const textHeight = doc.heightOfString(upper, opts);
+  doc.text(upper, 50, 112, opts);
+  const ruleY = 112 + textHeight + 9;
+  doc.moveTo(50, ruleY).lineTo(545, ruleY).strokeColor(COLORS.gold).lineWidth(1).stroke();
+  doc.y = ruleY + 24;
 }
 
 function para(doc: PDFKit.PDFDocument, text: string, size = 11, gap = 4): void {
@@ -111,6 +126,15 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   doc.y += 142;
   para(doc, mbtiNarrative(results), 11.2);
   sub(doc, 'Your Four Preference Dimensions');
+  // Guard against the preceding narrative paragraph (length varies with the
+  // candidate's actual results) pushing this fixed-height card row down far
+  // enough to collide with the footer. If there isn't enough room left on the
+  // page, start a fresh page for the card row instead of overflowing into it.
+  if (doc.y + 94 > 730) {
+    doc.addPage(); header(doc);
+    doc.y = 112;
+    sub(doc, 'Your Four Preference Dimensions');
+  }
   const cardY = doc.y;
   labels.forEach((label, i) => {
     const x = 50 + i * 128;
@@ -188,8 +212,7 @@ export async function generateComprehensiveReport(name: string, results: Assessm
   lowTwo(e).forEach(([label, score]) => bullet(doc, `${label}: ${score}/100 — this is an area worth understanding and developing rather than treating as a fixed limitation.`));
 
   doc.addPage(); header(doc); title(doc, 'Putting the Pattern to Work');
-  sub(doc, 'What the Results Suggest');
-  insights.slice(0, 5).forEach((item) => insight(doc, item));
+  para(doc, 'The integrated profile on page 2 sets out the dominant pattern, the developmental tension and the other current indicators across MBTI, Big Five and EQ. This page turns that pattern into practical next steps rather than repeating it.', 10.7);
   sub(doc, 'Practical Development');
   developmentActions(results).forEach((item) => bullet(doc, item));
   sub(doc, 'Important Context');
