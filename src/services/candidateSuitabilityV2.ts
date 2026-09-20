@@ -294,7 +294,7 @@ function managementRecommendations(results: AssessmentResults, job: JobData): st
     s.independent >= 70 ? 'Protect periods of uninterrupted work where the role permits it; sustained concentration may be an important performance condition.' : 'Use regular short check-ins to maintain alignment without creating unnecessary supervision.',
     s.communication < 60 ? 'Pay attention to communication style in the first months. Direct or concise communication should be tested for impact, not assumed to be a problem.' : 'Use early stakeholder feedback to confirm that communication style is landing as intended across different audiences.',
     s.resilience < 60 ? 'Monitor workload and recovery, especially during prolonged periods of pressure. The objective is early support, not a judgement about capability.' : 'Continue to monitor workload during sustained pressure rather than assuming a strong regulation signal removes the need for support.',
-    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : 'Use the candidate's collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.',
+    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : 'Use the candidate’s collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.',
   ];
 }
 
@@ -318,8 +318,8 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
     commercial: ['strategic', 'execution', 'relationship', 'communication', 'negotiation', 'resilience', 'teamwork', 'adaptability'],
     leadership: ['strategic', 'execution', 'communication', 'resilience', 'teamwork', 'relationship', 'adaptability', 'analysis'],
     analytical: ['analysis', 'strategic', 'execution', 'process', 'independent', 'adaptability', 'resilience', 'communication'],
-      advisory: ['strategic', 'analysis', 'communication', 'relationship', 'adaptability', 'execution', 'resilience', 'teamwork'],
-      general: ['strategic', 'execution', 'analysis', 'communication', 'teamwork', 'adaptability', 'resilience', 'independent'],
+    advisory: ['strategic', 'analysis', 'communication', 'relationship', 'adaptability', 'execution', 'resilience', 'teamwork'],
+    general: ['strategic', 'execution', 'analysis', 'communication', 'teamwork', 'adaptability', 'resilience', 'independent'],
   };
   const keyOrder = preferredKeys[family];
   const comps = keyOrder.map(key => allComps.find(c => c.key === key)!).filter(Boolean);
@@ -408,7 +408,7 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   profile.forEach(([label, value]) => { const rowY = doc.y; doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(8.4).text(label, 50, rowY, { width: 82 }); doc.fillColor(COLORS.dark).font('Helvetica').fontSize(10.2).text(value, 140, rowY, { width: 405 }); doc.y = rowY + 24; });
 
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Competency Translation');
-  paragraph(doc, 'The following indicators translate the assessment into capabilities a recruiter can explore in a structured interview. They are deliberately presented as signals rather than promises: the strongest value comes from comparing them with evidence from the candidate\'s actual experience.', 10.6, 4);
+  paragraph(doc, 'The following indicators translate the assessment into capabilities a recruiter can explore in a structured interview. They are deliberately presented as signals rather than promises: the strongest value comes from comparing them with evidence from the candidate’s actual experience.', 10.6, 4);
   comps.forEach(item => competencyBar(doc, item));
   subhead(doc, 'Reading the indicators');
   paragraph(doc, `A ${alignmentBand.toLowerCase()} across these indicators does not constitute a hiring decision. It means the assessment provides a coherent set of hypotheses for the interview. The recruiter should test the strongest signals for evidence of past performance and the weaker signals for context, compensating behaviours and development potential.`, 10.2, 4);
@@ -437,7 +437,7 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
     bullet(doc, 'Every competency in this profile currently reaches a strong signal for this role. Interview time is best spent confirming those signals translate into real behaviour, rather than probing for a weak area the assessment has not identified.');
   }
   subhead(doc, 'Important qualification');
-  paragraph(doc, 'The current Big Five and EQ values are 0–100 assessment indicators derived from the questionnaire scoring model; they are not population percentiles. They should therefore not be presented as evidence that a candidate ranks at a particular percentile in the wider population. The report\'s value is in the pattern across dimensions and its relevance to the specific role.', 9.9, 4);
+  paragraph(doc, 'The current Big Five and EQ values are 0–100 assessment indicators derived from the questionnaire scoring model; they are not population percentiles. They should therefore not be presented as evidence that a candidate ranks at a particular percentile in the wider population. The report’s value is in the pattern across dimensions and its relevance to the specific role.', 9.9, 4);
 
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Recommended Interview Questions');
   paragraph(doc, `The strongest use of a Candidate Suitability report is not to make the interview shorter. It is to make the interview better. The questions below are designed around the profile, the role context and the areas most worth validating for ${role}.`, 10.8, 5);
