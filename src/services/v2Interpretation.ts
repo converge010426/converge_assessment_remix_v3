@@ -1,7 +1,17 @@
 import { AssessmentResults } from '../logic.js';
 
 export type SignalBand = 'STRONG' | 'MODERATE' | 'DEVELOPING';
-export type Insight = { title: string; text: string; band: SignalBand };
+export type Insight = { title: string; text: string; band: SignalBand; displayBand?: string };
+// P1 #8: STRONG/MODERATE/DEVELOPING means "this capacity is strong" on every
+// insight card except Developmental Tension, where it actually means "this
+// gap is pronounced" (it's computed from the weakest indicator, inverted).
+// That reuse of the same word for two different meanings is what let a
+// reader see "Developmental Tension: STRONG" and misread it as praise. The
+// underlying band()/threshold math is unchanged; only the label shown for
+// this one card is translated to unambiguous wording.
+const DEVELOPMENTAL_TENSION_LABEL: Record<SignalBand, string> = {
+  STRONG: 'PRONOUNCED', MODERATE: 'NOTABLE', DEVELOPING: 'MILD',
+};
 
 const band = (score: number): SignalBand => score >= 75 ? 'STRONG' : score >= 55 ? 'MODERATE' : 'DEVELOPING';
 const top = (items: Array<[string, number]>, n = 2) => [...items].sort((a, b) => b[1] - a[1]).slice(0, n);
@@ -26,6 +36,7 @@ export function frameworkSummary(results: AssessmentResults): Insight[] {
     },
     {
       title: 'Developmental tension', band: band(100 - (weaker[0]?.[1] ?? 50)),
+      displayBand: DEVELOPMENTAL_TENSION_LABEL[band(100 - (weaker[0]?.[1] ?? 50))],
       text: `The areas producing the lowest scaled indicators are ${weaker.map(([name]) => name).join(' and ')}. These should be treated as areas to understand and develop, not as deficits or predictions of poor performance.`,
     },
   ];

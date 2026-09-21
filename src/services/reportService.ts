@@ -74,19 +74,32 @@ function bullet(doc: PDFKit.PDFDocument, text: string): void {
 }
 
 function scoreBar(doc: PDFKit.PDFDocument, label: string, score: number): void {
+  // P1 #10: visual refinement only -- the 0-100 value and its meaning are
+  // completely unchanged. The score now sits inline with the label (saving a
+  // line of vertical space) and the bar gets rounded end-caps and light
+  // 25/50/75 reference ticks purely as a reading aid on the same
+  // already-disclosed internal scale -- these are not percentiles, norms, or
+  // any new claim about the score's meaning.
   const y = doc.y;
+  const clamped = Math.max(0, Math.min(100, score));
+  const barWidth = 495, barHeight = 11, barY = y + 16;
   doc.fillColor(COLORS.dark).font('Helvetica-Bold').fontSize(9.5).text(label.toUpperCase(), 50, y);
-  doc.rect(50, y + 16, 495, 9).fill(COLORS.light);
-  doc.rect(50, y + 16, Math.max(0, Math.min(100, score)) * 4.95, 9).fill(COLORS.gold);
-  doc.fillColor(COLORS.grey).font('Helvetica').fontSize(8.8).text(`${score}/100`, 50, y + 29);
-  doc.y = y + 47;
+  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(9.5).text(`${score}/100`, 50, y, { width: barWidth, align: 'right' });
+  doc.roundedRect(50, barY, barWidth, barHeight, barHeight / 2).fill(COLORS.light);
+  if (clamped > 0) doc.roundedRect(50, barY, Math.max(barHeight, barWidth * clamped / 100), barHeight, barHeight / 2).fill(COLORS.gold);
+  doc.strokeColor(COLORS.grey).lineWidth(0.6);
+  [25, 50, 75].forEach((mark) => {
+    const tickX = 50 + (barWidth * mark) / 100;
+    doc.moveTo(tickX, barY + barHeight + 2).lineTo(tickX, barY + barHeight + 5).stroke();
+  });
+  doc.y = barY + barHeight + 14;
 }
 
 function insight(doc: PDFKit.PDFDocument, item: Insight): void {
   const y = doc.y;
   doc.rect(50, y, 495, 0.5).fill(COLORS.gold);
   doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(11).text(item.title.toUpperCase(), 50, y + 10, { characterSpacing: 0.7 });
-  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(8.5).text(item.band, 445, y + 10, { width: 100, align: 'right' });
+  doc.fillColor(COLORS.grey).font('Helvetica-Bold').fontSize(8.5).text(item.displayBand ?? item.band, 445, y + 10, { width: 100, align: 'right' });
   doc.fillColor(COLORS.dark).font('Helvetica').fontSize(10.5).text(item.text, 50, y + 27, { width: 495, lineGap: 3 });
   doc.y = y + 27 + doc.heightOfString(item.text, { width: 495, lineGap: 3 }) + 13;
 }
@@ -126,11 +139,17 @@ export async function generateMBTIReport(name: string, results: AssessmentResult
   doc.y += 142;
   para(doc, mbtiNarrative(results), 11.2);
   sub(doc, 'Your Four Preference Dimensions');
-  // Guard against the preceding narrative paragraph (length varies with the
-  // candidate's actual results) pushing this fixed-height card row down far
-  // enough to collide with the footer. If there isn't enough room left on the
-  // page, start a fresh page for the card row instead of overflowing into it.
-  if (doc.y + 94 > 730) {
+  // P1 #9: this guard exists solely to stop the box row from colliding with
+  // the fixed-position footer (drawn at y=762). It previously reserved 94pt
+  // (the 74pt box height plus a 20pt margin intended for content that never
+  // actually follows on this page, since an unconditional addPage() always
+  // comes right after this block) — stricter than the real risk, which
+  // pushed this row to its own near-empty page even for ordinary-length
+  // narratives. Measuring against the actual 74pt box height plus a modest
+  // 12pt safety margin keeps the same protection for genuinely long content
+  // while letting normal-length reports keep the row on page 1.
+  const boxRowHeight = 74, boxRowSafetyMargin = 12;
+  if (doc.y + boxRowHeight + boxRowSafetyMargin > 745) {
     doc.addPage(); header(doc);
     doc.y = 112;
     sub(doc, 'Your Four Preference Dimensions');
