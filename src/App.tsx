@@ -20,7 +20,7 @@ const Letterhead = () => (
       </h1>
       <div className="space-y-1 text-white text-sm md:text-base font-sans font-semibold leading-tight tracking-wide subpixel-antialiased opacity-95">
         <p>Three platforms. One integrated psychological insight.</p>
-        <p>Three validated frameworks. One evidence-based hiring insight.</p>
+        <p>Three integrated frameworks. One structured hiring insight.</p>
         <p>Three frameworks. One executive advantage.</p>
         <p>Three developmental platforms. One transformational growth tool.</p>
       </div>
@@ -278,10 +278,10 @@ export default function App() {
               className="mb-16 max-w-3xl"
             >
               <h2 className="font-sans text-2xl md:text-3xl font-bold text-navy leading-snug mb-4 antialiased">
-                A verified psychological architecture, built from three validated frameworks.
+                An integrated psychological profile, built from three established frameworks.
               </h2>
               <p className="text-base leading-relaxed text-grey">
-                <strong className="text-dark">CONVERGE<sup>™</sup></strong> integrates MBTI, IPIP Big Five, and Emotional Intelligence assessment into a single, evidence-based profile — whether you're exploring your own personality, or evaluating fit for a role.
+                <strong className="text-dark">CONVERGE<sup>™</sup></strong> integrates MBTI, IPIP Big Five, and Emotional Intelligence assessment into a single, structured profile — whether you're exploring your own personality, or evaluating fit for a role.
               </p>
             </motion.div>
 
@@ -290,7 +290,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-16"
             >
-              <h2 className="section-label mb-6">Three Validated Frameworks</h2>
+              <h2 className="section-label mb-6">Three Integrated Frameworks</h2>
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="p-6 bg-white border border-blue-100 border-t-4 border-t-blue-500">
                   <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
@@ -1760,14 +1760,14 @@ function AdminResultDetail() {
               </div>
             </div>
             <div className="text-navy font-sans text-5xl font-bold">{results?.mbti || 'N/A'}</div>
-            <div className="text-gold font-sans italic text-[10px] mt-1">Cross-validated</div>
+            <div className="text-gold font-sans italic text-[10px] mt-1">Consistent across frameworks</div>
           </div>
         </div>
       </div>
 
       <div className="bg-warm px-10 md:px-16 py-8 border-b border-gold/10">
         <p className="text-lg leading-relaxed text-dark font-bold italic antialiased">
-          CONVERGE<sup>™</sup> has identified a verified psychological architecture. Your results show high consistency across all three validated frameworks.
+          CONVERGE<sup>™</sup> has produced an integrated psychological profile. Your results are presented consistently across all three frameworks.
         </p>
       </div>
 
