@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx dev-server.ts",
     "start": "tsx api/index.ts",
-    "build": "vite build",
+    "build": "node scripts/guard-no-legacy-navigation.mjs && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
