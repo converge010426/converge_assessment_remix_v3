@@ -7,6 +7,10 @@ const forbidden = [
   ['src/heroFinalFix.ts', 'data-converge-hero-wrapper'],
   ['src/main.tsx', 'installNavigationRepeatFix'],
   ['src/main.tsx', 'installHeroFinalFix'],
+  ['src/v2MarketFixes.ts', 'history.pushState ='],
+  ['src/v2MarketFixes.ts', 'history.replaceState ='],
+  ['src/v2MarketFixes.ts', 'originalPushState'],
+  ['src/v2MarketFixes.ts', 'originalReplaceState'],
 ];
 
 for (const [file, token] of forbidden) {
