@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Montserrat", sans-serif;
+  --color-navy: #1B2A4A;
+  --color-gold: #c5a059;
+  --color-gold-lt: #d4b47a;
+  --color-earth: #5d3a1a;
+  --color-biscuit: #e3d5b8;
+  --color-cream: #fdfcf8;
+  --color-warm: #f9f7f2;
+  --color-grey: #4A4A4A;
+  --color-dark: #1A1A1A;
+}
+
+@layer base {
+  body { @apply bg-cream font-serif text-dark antialiased; }
+}
+
+.page-container {
+  @apply max-w-[900px] mx-auto bg-white shadow-[0_0_80px_rgba(27,42,74,0.12)] relative min-h-screen flex flex-col;
+}
+
+.page-container::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-[5px] bg-linear-to-b from-gold via-navy to-gold;
+}
+
+/* Landing page uses the original hero artwork directly; the current hero correction is scoped to its wrapper. */
+.page-container > img[src="/converge-hero.png"] {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Questionnaire / Letterhead: compact header with no question-count block. */
+.page-container:has(> header) > header.bg-navy {
+  padding: 24px 32px;
+  margin-bottom: 28px;
+}
+
+.page-container:has(> header) > header.bg-navy > a > div {
+  display: block;
+  max-width: 760px;
+}
+
+.page-container:has(> header) > header.bg-navy > a > div p {
+  display: none;
+}
+
+.page-container:has(> header) > header.bg-navy > a > div::after {
+  content: "Three perspectives. One integrated profile.\A MBTI • EQ • Big Five.\A No right or wrong answers. Don't overthink it.";
+  display: block;
+  white-space: pre-line;
+  color: rgba(255,255,255,.95);
+  font-family: Montserrat, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: .7px;
+}
+
+/* Keep all five response choices visible in the normal desktop viewport. */
+.page-container:has(> header) > main h3 {
+  margin-bottom: 24px !important;
+}
+
+.page-container:has(> header) > main .grid.grid-cols-1.gap-3 button.p-6 {
+  padding: 12px 18px !important;
+  min-height: 48px;
+}
+
+.page-container:has(> header) > main > div:first-child {
+  margin-bottom: 18px !important;
+}
+
+/* Final-question contact box: present in the DOM throughout the quiz, but visible only when SUBMIT/NEXT is present. */
+.converge-quiz-contact {
+  display: none !important;
+}
+
+.page-container:has(> header) > main:has(button.bg-gold) .converge-quiz-contact {
+  display: block !important;
+}
+
+/* Return Home instruction: scoped to the uniquely styled Return Home button. */
+.page-container main > button.border-b.border-navy {
+  position: relative;
+}
+
+.page-container main > button.border-b.border-navy::after {
+  content: 'Want to explore more? Return Home to choose your next CONVERGE assessment.';
+  display: block;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(197, 160, 89, 0.35);
+  color: #4A4A4A;
+  font-family: "Montserrat", sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  line-height: 1.6;
+  text-transform: none;
+  white-space: normal;
+}
+
+.section-label { @apply font-sans text-[9px] font-bold tracking-[4px] text-gold uppercase mt-12 mb-7 pb-2.5 border-b border-gold/30; }
+
+@media (max-width: 767px) {
+  .page-container:has(> header) > header.bg-navy { padding: 20px 20px; }
+  .page-container:has(> header) > main h3 { font-size: 2rem !important; line-height: 1.15 !important; }
+  .page-container:has(> header) > main .grid.grid-cols-1.gap-3 button.p-6 { padding: 10px 14px !important; min-height: 44px; }
+}
