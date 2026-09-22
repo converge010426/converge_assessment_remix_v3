@@ -272,19 +272,9 @@ function installRouteObserver(): void {
     window.setTimeout(applyV2PresentationFixes, 120);
     window.setTimeout(restoreCandidateDetailsOnLanding, 250);
   };
-  const originalPushState = history.pushState.bind(history);
-  history.pushState = ((...args: Parameters<History['pushState']>) => {
-    originalPushState(...args);
-    rerun();
-  }) as History['pushState'];
-  const originalReplaceState = history.replaceState.bind(history);
-  history.replaceState = ((...args: Parameters<History['replaceState']>) => {
-    originalReplaceState(...args);
-    rerun();
-  }) as History['replaceState'];
   window.addEventListener('popstate', rerun);
   const observer = new MutationObserver(() => {
-    if (window.location.pathname === '/') restoreCandidateDetailsOnLanding();
+    rerun();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }

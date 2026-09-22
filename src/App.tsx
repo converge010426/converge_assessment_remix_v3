@@ -129,7 +129,17 @@ export default function App() {
   const [answers, setAnswers] = React.useState<Record<number, number>>({});
   const [userName, setUserName] = React.useState('');
   const [userEmail, setUserEmail] = React.useState('');
-  const [selectedProduct, setSelectedProduct] = React.useState<'mbti' | 'comprehensive' | 'recruiter'>('mbti');
+  const getInitialProduct = (): 'mbti' | 'comprehensive' | 'recruiter' => {
+    const saved = localStorage.getItem('last_product') || sessionStorage.getItem('converge_last_product');
+    return saved === 'comprehensive' || saved === 'recruiter' || saved === 'mbti' ? saved : 'mbti';
+  };
+  const [selectedProduct, setSelectedProduct] = React.useState<'mbti' | 'comprehensive' | 'recruiter'>(getInitialProduct);
+
+  const selectProduct = (product: 'mbti' | 'comprehensive' | 'recruiter') => {
+    setSelectedProduct(product);
+    localStorage.setItem('last_product', product);
+    sessionStorage.setItem('converge_last_product', product);
+  };
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   // Job Context State for Converge 3
@@ -346,7 +356,7 @@ export default function App() {
                 <h2 className="section-label mb-6">Select Assessment Product</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   <button 
-                    onClick={() => setSelectedProduct('mbti')}
+                    onClick={() => selectProduct('mbti')}
                     className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'mbti' ? 'bg-blue-600 text-white border-blue-600 shadow-xl scale-[1.02]' : 'bg-white text-dark border-blue-100 hover:border-blue-400'}`}
                   >
                     <div>
@@ -374,7 +384,7 @@ export default function App() {
                   </button>
 
                   <button 
-                    onClick={() => setSelectedProduct('comprehensive')}
+                    onClick={() => selectProduct('comprehensive')}
                     className={`p-6 border text-left transition-all relative flex flex-col justify-between ${selectedProduct === 'comprehensive' ? 'bg-purple-600 text-white border-purple-600 shadow-xl scale-[1.02]' : 'bg-white text-dark border-purple-100 hover:border-purple-400'}`}
                   >
                     <div>
@@ -402,7 +412,7 @@ export default function App() {
                   </button>
 
                   <button 
-                    onClick={() => setSelectedProduct('recruiter')}
+                    onClick={() => selectProduct('recruiter')}
                     className={`p-7 border-2 text-left transition-all relative flex flex-col justify-between shadow-lg ${selectedProduct === 'recruiter' ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xl scale-[1.02]' : 'bg-emerald-50/40 text-dark border-emerald-200 hover:border-emerald-500'}`}
                   >
                     <div>
