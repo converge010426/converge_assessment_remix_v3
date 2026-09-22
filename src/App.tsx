@@ -795,6 +795,13 @@ export default function App() {
               )}
             </div>
 
+            <button 
+              onClick={() => navigate('/')}
+              className="text-navy font-sans text-[10px] font-bold tracking-[3px] uppercase border-b border-navy pb-1 hover:text-gold hover:border-gold transition-colors mb-12"
+            >
+              Return Home
+            </button>
+
             <div className="w-full max-w-4xl bg-white border border-gold/20 shadow-2xl overflow-hidden mb-12 text-left">
               <div className="bg-navy p-6 text-center">
                
@@ -899,12 +906,6 @@ export default function App() {
                 </p>
               </div>
             </div>
-            <button 
-              onClick={() => navigate('/')}
-              className="text-navy font-sans text-[10px] font-bold tracking-[3px] uppercase border-b border-navy pb-1 hover:text-gold hover:border-gold transition-colors"
-            >
-              Return Home
-            </button>
           </main>
           <Footer />
         </div>
