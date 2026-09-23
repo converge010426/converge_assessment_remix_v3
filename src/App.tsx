@@ -277,7 +277,7 @@ export default function App() {
   <Route path="/" element={
         <div className="page-container p-8 md:p-16">
           <img
-            src="/converge-hero.png"
+            src="/converge-hero-final.svg"
             alt="CONVERGE — Three Frameworks. One You."
             className="w-full h-auto block mb-12"
           />
