@@ -547,7 +547,7 @@ export default function App() {
                   <ul className="space-y-4 text-dark font-bold">
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">01</span>
-                      <p>60 easy multiple-choice questions — less than 10 minutes.</p>
+                      <p>76 questions — complete in under 10 minutes.</p>
                     </li>
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">02</span>
