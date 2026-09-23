@@ -241,7 +241,6 @@ function applyV2PresentationFixes(): void {
     replaceText(document, 'A verified psychological architecture, built from three validated frameworks.', 'A psychological architecture drawing on three well-established perspectives.');
     replaceText(document, 'Three Validated Frameworks', 'Three Well-Established Perspectives');
     replaceText(document, 'Validated frameworks, one profile', 'Well-established perspectives, one profile');
-    replaceText(document, '60 easy multiple-choice questions — less than 10 minutes.', '76 questions — complete in under 10 minutes.');
     replaceText(document, 'Answer honestly based on your natural tendencies, not how you think you should behave.', 'There are no right or wrong answers. Choose the response that best reflects you.');
     replaceText(document, "Try to avoid 'Neutral' answers where possible to ensure a more precise profile.", "Read each question, choose the response that best reflects you, and don't overthink it.");
     const main = document.querySelector('.page-container main');
