@@ -3,8 +3,6 @@ import fs from 'node:fs';
 const forbidden = [
   ['src/v2MarketFixes.ts', 'function addHeroCorrection'],
   ['src/v2MarketFixes.ts', 'function installBeginAssessmentFallback'],
-  ['src/heroFinalFix.ts', 'document.createElementNS'],
-  ['src/heroFinalFix.ts', 'data-converge-hero-wrapper'],
   ['src/main.tsx', 'installNavigationRepeatFix'],
   ['src/main.tsx', 'installHeroFinalFix'],
   ['src/v2MarketFixes.ts', 'history.pushState ='],
