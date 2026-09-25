@@ -136,6 +136,10 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = React.useState<'mbti' | 'comprehensive' | 'recruiter'>(getInitialProduct);
 
   const selectProduct = (product: 'mbti' | 'comprehensive' | 'recruiter') => {
+    if (product !== selectedProduct) {
+      setAnswers({});
+      setCurrentQuestionIndex(0);
+    }
     setSelectedProduct(product);
     localStorage.setItem('last_product', product);
     sessionStorage.setItem('converge_last_product', product);
@@ -155,19 +159,6 @@ export default function App() {
     console.log('- Vercel Environment:', !!(window as any).location.hostname.includes('vercel.app'));
     console.log('- Current Hostname:', window.location.hostname);
   }, []);
-
-  // If every question already has an answer (the customer already completed the
-  // questionnaire once) and they then switch products, jump straight to the final
-  // question so SUBMIT is immediately available - without touching `answers` and
-  // without requiring them to click back through already-answered questions.
-  // On a fresh/first-time run `answers` is empty, so this has no effect and normal
-  // first-time behaviour (starting at question 1) is unchanged.
-  React.useEffect(() => {
-    const allAnswered = questions.length > 0 && questions.every(q => answers[q.id] !== undefined);
-    if (allAnswered) {
-      setCurrentQuestionIndex(questions.length - 1);
-    }
-  }, [selectedProduct]);
 
   const handleAnswer = (value: number) => {
     const q = questions[currentQuestionIndex];
@@ -547,7 +538,7 @@ export default function App() {
                   <ul className="space-y-4 text-dark font-bold">
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">01</span>
-                      <p>60 easy multiple-choice questions — less than 10 minutes.</p>
+                      <p>76 questions — complete in under 10 minutes.</p>
                     </li>
                     <li className="flex gap-3">
                       <span className="text-gold font-bold">02</span>
