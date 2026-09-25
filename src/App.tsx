@@ -144,6 +144,25 @@ export default function App() {
     localStorage.setItem('last_product', product);
     sessionStorage.setItem('converge_last_product', product);
   };
+
+  const beginAssessment = () => {
+    const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('.page-container input'));
+    const nameInput = inputs.find(input => input.placeholder?.toLowerCase().includes('full name') || input.name?.toLowerCase().includes('name'));
+    const emailInput = inputs.find(input => input.type === 'email' || input.placeholder?.toLowerCase().includes('email') || input.name?.toLowerCase().includes('email'));
+    const name = nameInput?.value.trim() || userName.trim();
+    const email = emailInput?.value.trim() || userEmail.trim();
+
+    if (!name || !email) {
+      alert('Please enter your full name and email address before beginning the assessment.');
+      return;
+    }
+
+    setUserName(name);
+    setUserEmail(email);
+    sessionStorage.setItem('converge_candidate_name', name);
+    sessionStorage.setItem('converge_candidate_email', email);
+    navigate('/quiz');
+  };
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   // Job Context State for Converge 3
@@ -271,6 +290,7 @@ export default function App() {
             src="/converge-hero.png"
             alt="CONVERGE — Three Frameworks. One You."
             className="w-full h-auto block mb-12"
+            style={{ visibility: 'hidden' }}
           />
           <main className="flex-1 py-12">
             <motion.div 
@@ -577,9 +597,9 @@ export default function App() {
                     />
                   </div>
                   <button 
-                    onClick={() => navigate('/quiz')}
-                    disabled={!userName || !userEmail}
-                    className="w-full group flex items-center justify-center gap-3 bg-navy text-white px-8 py-4 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-navy/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={beginAssessment}
+                    className="w-full group flex items-center justify-center gap-3 bg-navy text-white px-8 py-4 font-sans text-xs font-bold tracking-[3px] uppercase hover:bg-navy/90 transition-all"
                   >
                     Begin Assessment
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
