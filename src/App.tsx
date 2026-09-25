@@ -162,6 +162,9 @@ export default function App() {
     sessionStorage.setItem('converge_candidate_name', name);
     sessionStorage.setItem('converge_candidate_email', email);
     navigate('/quiz');
+    window.setTimeout(() => {
+      if (window.location.pathname === '/') window.location.assign('/quiz');
+    }, 120);
   };
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
