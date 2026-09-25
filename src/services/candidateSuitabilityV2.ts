@@ -294,7 +294,7 @@ function managementRecommendations(results: AssessmentResults, job: JobData): st
     s.independent >= 70 ? 'Protect periods of uninterrupted work where the role permits it; sustained concentration may be an important performance condition.' : 'Use regular short check-ins to maintain alignment without creating unnecessary supervision.',
     s.communication < 60 ? 'Pay attention to communication style in the first months. Direct or concise communication should be tested for impact, not assumed to be a problem.' : 'Use early stakeholder feedback to confirm that communication style is landing as intended across different audiences.',
     s.resilience < 60 ? 'Monitor workload and recovery, especially during prolonged periods of pressure. The objective is early support, not a judgement about capability.' : 'Continue to monitor workload during sustained pressure rather than assuming a strong regulation signal removes the need for support.',
-    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : 'Use the candidate's collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.',
+    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : "Use the candidate's collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.",
   ];
 }
 
