@@ -1,7 +1,11 @@
 export function installHeroFinalFix(): void {
   if (typeof window === 'undefined') return;
 
+  let running = false;
+
   const run = () => {
+    if (running) return;
+    running = true;
     const image = document.querySelector<HTMLImageElement>('.page-container img[src="/converge-hero.png"]');
     if (!image) return;
 
@@ -73,6 +77,8 @@ export function installHeroFinalFix(): void {
     `;
 
     wrapper.appendChild(overlay);
+    image.style.visibility = 'visible';
+    running = false;
   };
 
   if (document.readyState === 'loading') {
@@ -83,4 +89,11 @@ export function installHeroFinalFix(): void {
   window.setTimeout(run, 300);
   window.setTimeout(run, 1000);
   window.setTimeout(run, 2000);
+
+  const observer = new MutationObserver(() => {
+    const image = document.querySelector<HTMLImageElement>('.page-container img[src="/converge-hero.png"]');
+    const overlay = document.querySelector('[data-converge-hero-overlay]');
+    if (image && !overlay) run();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
