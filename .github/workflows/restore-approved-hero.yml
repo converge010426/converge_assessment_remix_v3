@@ -1,0 +1,62 @@
+name: Restore approved landing hero
+
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-approved-hero.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore-hero:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build the approved static hero from the last known source asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet pillow cairosvg
+          git show 7816c1f645171faa9d59cfac6d42328bf2a47e43:public/converge-hero.png > /tmp/base.png
+          cat > /tmp/overlay.svg <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024" preserveAspectRatio="none">
+<defs><linearGradient id="eq-panel" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4b2d76"/><stop offset="100%" stop-color="#603793"/></linearGradient></defs>
+<rect x="493" y="322" width="453" height="155" fill="url(#eq-panel)"/>
+<circle cx="604" cy="400" r="70" fill="#6336a0" stroke="#ffffff" stroke-width="6"/>
+<text x="604" y="417" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="700" fill="#ffffff">EQ</text>
+<text x="700" y="367" font-family="Arial, sans-serif" font-size="32" font-weight="800" fill="#ffffff">EQ</text>
+<text x="700" y="407" font-family="Arial, sans-serif" font-size="24" fill="#ffffff">How you handle</text>
+<text x="700" y="435" font-family="Arial, sans-serif" font-size="24" fill="#ffffff">the human dimension</text>
+<rect x="92" y="518" width="375" height="102" fill="#eef0f3"/>
+<text x="98" y="553" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#14233f">76 QUESTIONS</text>
+<text x="98" y="589" font-family="Arial, sans-serif" font-size="24" fill="#14233f">Complete in under 10 minutes.</text>
+<rect x="504" y="582" width="294" height="191" fill="#f4f4f5"/><rect x="823" y="582" width="297" height="191" fill="#f4f4f5"/><rect x="1143" y="582" width="310" height="191" fill="#f4f4f5"/>
+<g font-family="Arial, sans-serif" fill="#14233f" text-anchor="middle" font-size="20">
+<text x="651" y="620">A focused MBTI</text><text x="651" y="646">personality assessment</text><text x="651" y="672">and report.</text><rect x="560" y="676" width="181" height="2" fill="#214f8b"/>
+<text x="971" y="620">A deeper integrated</text><text x="971" y="646">analysis of MBTI, EQ</text><text x="971" y="672">&amp; Big Five.</text><rect x="881" y="676" width="181" height="2" fill="#6b35ad"/>
+<text x="1298" y="620">The comprehensive assessment</text><text x="1298" y="646">plus a job-specific Candidate</text><text x="1298" y="672">Suitability Analysis.</text><rect x="1201" y="676" width="194" height="2" fill="#248743"/>
+</g>
+<rect x="0" y="862" width="705" height="151" fill="#022340"/>
+<text x="72" y="912" font-family="Arial, sans-serif" font-size="27" font-weight="800" fill="#59bf3e">THREE PERSPECTIVES.</text>
+<text x="72" y="946" font-family="Arial, sans-serif" font-size="21" fill="#ffffff">One integrated view of how</text>
+<text x="72" y="974" font-family="Arial, sans-serif" font-size="21" fill="#ffffff">you think, behave and relate.</text>
+</svg>
+SVG
+          python - <<'PY2'
+import cairosvg
+from PIL import Image
+cairosvg.svg2png(url='/tmp/overlay.svg', write_to='/tmp/overlay.png', output_width=1536, output_height=1024)
+base=Image.open('/tmp/base.png').convert('RGBA')
+overlay=Image.open('/tmp/overlay.png').convert('RGBA')
+Image.alpha_composite(base, overlay).save('public/converge-hero.png', optimize=True)
+PY2
+          rm -f src/heroFinalFix.ts
+          rm -f .github/workflows/restore-approved-hero.yml
+          git config user.name "CONVERGE Assessments"
+          git config user.email "tomknsn@gmail.com"
+          git add public/converge-hero.png .github/workflows/restore-approved-hero.yml
+          git commit -m "Restore approved static landing hero"
+          git push origin HEAD:main
