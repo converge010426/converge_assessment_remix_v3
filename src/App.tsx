@@ -288,7 +288,7 @@ export default function App() {
        <Route path="/support" element={<Support />} />
 
   <Route path="/" element={
-        <div className="page-container p-8 md:p-16"><main className="flex-1 py-12">
+        <div className="page-container p-8 md:p-16">\n          <img src="/converge-hero.png" alt="CONVERGE — Three Frameworks. One You." className="w-full h-auto block mb-12" />\n          <main className="flex-1 py-12">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
