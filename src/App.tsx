@@ -293,8 +293,7 @@ export default function App() {
             src="/converge-hero.png"
             alt="CONVERGE — Three Frameworks. One You."
             className="w-full h-auto block mb-12"
-            style={{ visibility: 'hidden' }}
-          />
+                      />
           <main className="flex-1 py-12">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
