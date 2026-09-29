@@ -139,6 +139,7 @@ export default function App() {
     if (product !== selectedProduct) {
       setAnswers({});
       setCurrentQuestionIndex(0);
+      sessionStorage.removeItem('converge_replay_state');
     }
     setSelectedProduct(product);
     localStorage.setItem('last_product', product);
