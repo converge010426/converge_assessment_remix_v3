@@ -294,7 +294,7 @@ function managementRecommendations(results: AssessmentResults, job: JobData): st
     s.independent >= 70 ? 'Protect periods of uninterrupted work where the role permits it; sustained concentration may be an important performance condition.' : 'Use regular short check-ins to maintain alignment without creating unnecessary supervision.',
     s.communication < 60 ? 'Pay attention to communication style in the first months. Direct or concise communication should be tested for impact, not assumed to be a problem.' : 'Use early stakeholder feedback to confirm that communication style is landing as intended across different audiences.',
     s.resilience < 60 ? 'Monitor workload and recovery, especially during prolonged periods of pressure. The objective is early support, not a judgement about capability.' : 'Continue to monitor workload during sustained pressure rather than assuming a strong regulation signal removes the need for support.',
-    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : "Use the candidate's collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.",
+    s.teamwork < 60 ? 'Make team interfaces and decision rights explicit so collaboration does not depend on unspoken expectations.' : 'Use the candidate's collaborative capacity deliberately by giving clear shared outcomes and ownership boundaries.',
   ];
 }
 
@@ -409,18 +409,7 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
 
   doc.addPage(); drawHeader(doc); sectionTitle(doc, 'Competency Translation');
   paragraph(doc, 'The following indicators translate the assessment into capabilities a recruiter can explore in a structured interview. They are deliberately presented as signals rather than promises: the strongest value comes from comparing them with evidence from the candidate\'s actual experience.', 10.6, 4);
-  // P1 #11: group by the same band() classification already shown per
-  // competency, so a MODERATE-banded item is now physically listed under a
-  // "Moderate Signals" heading -- reinforcing the P1 #8 fix and letting a
-  // recruiter scan straight to the section they care about, rather than
-  // reading a flat list of 8 bars top to bottom. No competency's band or
-  // score changes; this only changes how they're grouped on the page.
-  const strongForDisplay = comps.filter(c => band(c.score) === 'STRONG SIGNAL');
-  const moderateForDisplay = comps.filter(c => band(c.score) === 'MODERATE SIGNAL');
-  const exploreForDisplay = comps.filter(c => band(c.score) === 'AREA TO EXPLORE');
-  if (strongForDisplay.length) { subhead(doc, 'Strong Signals'); strongForDisplay.forEach(item => competencyBar(doc, item)); }
-  if (moderateForDisplay.length) { subhead(doc, 'Moderate Signals'); moderateForDisplay.forEach(item => competencyBar(doc, item)); }
-  if (exploreForDisplay.length) { subhead(doc, 'Areas to Explore'); exploreForDisplay.forEach(item => competencyBar(doc, item)); }
+  comps.forEach(item => competencyBar(doc, item));
   subhead(doc, 'Reading the indicators');
   paragraph(doc, `A ${alignmentBand.toLowerCase()} across these indicators does not constitute a hiring decision. It means the assessment provides a coherent set of hypotheses for the interview. The recruiter should test the strongest signals for evidence of past performance and the weaker signals for context, compensating behaviours and development potential.`, 10.2, 4);
 
@@ -442,17 +431,7 @@ export async function generateCandidateSuitabilityV2(name: string, results: Asse
   }
   if (validateComps.length) {
     subhead(doc, 'Structural support / risk areas');
-    // P1 #7: previously every bullet here used the identical trailing
-    // sentence, which read as templated when 2-3 competencies appeared
-    // together. These three variants preserve the same substantive meaning
-    // (treat as a hypothesis, not a fixed deficit; seek behavioural evidence)
-    // with different phrasing, selected by list position.
-    const validateVariants = [
-      (title: string) => `${title}: treat this as an area to validate. Explore the circumstances in which the candidate performs well, the strategies they use to compensate and what the role would require from them.`,
-      (title: string) => `${title}: worth probing directly in interview. Ask for a specific example, then test whether the candidate's account holds up under follow-up questions.`,
-      (title: string) => `${title}: treat this as a hypothesis rather than a conclusion. Look for corroborating or contradicting evidence in the candidate's actual track record.`,
-    ];
-    validateComps.slice(0, 3).forEach((item, i) => bullet(doc, validateVariants[i % validateVariants.length](item.title)));
+    validateComps.slice(0, 3).forEach(item => bullet(doc, `${item.title}: treat this as an area to validate. Explore the circumstances in which the candidate performs well, the strategies they use to compensate and what the role would require from them.`));
   } else {
     subhead(doc, 'Structural support / risk areas');
     bullet(doc, 'Every competency in this profile currently reaches a strong signal for this role. Interview time is best spent confirming those signals translate into real behaviour, rather than probing for a weak area the assessment has not identified.');
