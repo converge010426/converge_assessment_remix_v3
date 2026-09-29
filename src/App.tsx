@@ -337,7 +337,7 @@ export default function App() {
                   </div>
                   <h3 className="font-sans font-bold text-navy uppercase tracking-wide text-sm mb-2">Emotional Intelligence</h3>
                   <p className="text-sm text-grey leading-relaxed">
-                    How you recognise, understand, and manage emotion — in yourself and with others — a strong predictor of real-world performance.
+                    How you recognise, understand, and manage emotion — in yourself and with others — an important part of interpersonal effectiveness.
                   </p>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function App() {
               </div>
               <div>
                 <p className="font-sans font-black text-navy text-2xl mb-1">3</p>
-                <p className="text-xs text-grey uppercase tracking-wide font-bold">Validated frameworks, one profile</p>
+                <p className="text-xs text-grey uppercase tracking-wide font-bold">Integrated frameworks, one profile</p>
               </div>
               <div>
                 <p className="font-sans font-black text-navy text-2xl mb-1">ZAR</p>
@@ -1874,7 +1874,7 @@ function AdminResultDetail() {
         </section>
 
         <section className="mb-16 break-inside-avoid">
-          <h2 className="section-label">Section 2 • Big Five Clinical Data</h2>
+          <h2 className="section-label">Section 2 • Big Five Trait Data</h2>
           <div className="overflow-x-auto">
             {results?.bigFive ? (
               <table className="w-full border-collapse">
