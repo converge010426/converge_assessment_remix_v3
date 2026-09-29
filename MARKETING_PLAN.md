@@ -39,7 +39,7 @@ Affordable psychological architecture for everyone.
 **Body:** 
 Our new Candidate Suitability product doesn't just analyze the person—it analyzes the MATCH. 
 Define the role, define the environment, and let our engine cross-reference the candidate's architecture against the job's specific challenges.
-**CTA:** Professional Suitability Analysis for R250. [Link]
+**CTA:** Professional Suitability Analysis for R100. [Link]
 #Hiring #BusinessDevelopment #Converge
 
 ### Post 5: The Vision
@@ -59,7 +59,7 @@ Welcome to the future of professional self-discovery.
 **Fertile Ground Suggestions:**
 1. **Gumtree/OLX "Services" Section:** Post an ad titled "Structured Psychological CV Enhancement."
 2. **PNet / CareerJunction Forums:** Share results as a "Structured Profile" badge.
-3. **WhatsApp Groups (Community/Job Seekers):** Use a "R30 for your MBTI" hook to get them into the funnel.
+3. **WhatsApp Groups (Community/Job Seekers):** Use an "MBTI from R30" hook to get them into the funnel.
 
 **Ad Copy for Gumtree:**
 "Tired of sending CVs and getting no reply? Stand out with a CONVERGE™ Structured Profile. For the price of a coffee, get a professional report that presents your strengths to employers. MBTI + Big Five + EQ. Make them notice you."
