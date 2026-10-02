@@ -323,7 +323,7 @@ app.post('/api/yoco/create-checkout', async (req, res) => {
       headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json', 'Idempotency-Key': submission.payment_ref },
       body: JSON.stringify({
         amount: product.amountCents, currency: product.currency,
-        successUrl: `${origin}/thank-you?payment=success`, cancelUrl: `${origin}/thank-you?payment=cancelled`, failureUrl: `${origin}/thank-you?payment=failed`,
+        successUrl: `${origin}/`, cancelUrl: `${origin}/thank-you?payment=cancelled`, failureUrl: `${origin}/thank-you?payment=failed`,
         clientReferenceId: submission.payment_ref, externalId: submission.payment_ref,
         metadata: { submissionId: String(submission.id), paymentRef: submission.payment_ref, product: product.key }
       })
