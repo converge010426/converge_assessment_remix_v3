@@ -33,10 +33,12 @@ function constantTimeEqual(a: string, b: string) {
   return aBuffer.length === bBuffer.length && crypto.timingSafeEqual(aBuffer, bBuffer);
 }
 
-function publicOrigin() {
-  const origin = process.env.APP_PUBLIC_ORIGIN;
-  if (!origin) throw new Error('APP_PUBLIC_ORIGIN is not configured.');
-  return new URL(origin).origin;
+function publicOrigin(req: express.Request) {
+  const forwardedProto = req.header('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = req.get('host');
+  if (!host) throw new Error('Request host is not available.');
+  return new URL(`${protocol}://${host}`).origin;
 }
 
 function verifyYocoWebhook(req: express.Request): boolean {
@@ -315,7 +317,7 @@ app.post('/api/yoco/create-checkout', async (req, res) => {
     }
     const secret = process.env.YOCO_SECRET_KEY;
     if (!secret) return res.status(503).json({ error: 'PAYMENT_UNAVAILABLE', message: 'Online payment is not configured.' });
-    const origin = publicOrigin();
+    const origin = publicOrigin(req);
     const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
       method: 'POST',
       headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json', 'Idempotency-Key': submission.payment_ref },
